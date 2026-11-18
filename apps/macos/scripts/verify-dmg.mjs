@@ -53,7 +53,13 @@ if (values.release) {
   ok('image signed with a Developer ID Application identity');
 }
 if (values.notarized) {
-  if (spawnSync('xcrun', ['stapler', 'validate', dmg]).status !== 0) fail('FAILED no stapled notarization ticket on the image');
+  // stapler validate asks Apple about the ticket and can fail once right after stapling: try three times.
+  let stapled = false;
+  for (let attempt = 0; attempt < 3 && !stapled; attempt++) {
+    if (attempt) spawnSync('sleep', ['10']);
+    stapled = spawnSync('xcrun', ['stapler', 'validate', dmg]).status === 0;
+  }
+  if (!stapled) fail('FAILED no stapled notarization ticket on the image');
   const gk = spawnSync('spctl', ['--assess', '--type', 'open', '--context', 'context:primary-signature', '--verbose=2', dmg], { encoding: 'utf8' });
   if (gk.status !== 0 || !/source=Notarized Developer ID/.test(gk.stderr)) fail(`FAILED Gatekeeper: ${gk.stderr.trim()}`);
   ok('Gatekeeper accepts the image, notarized and stapled');
