@@ -32,7 +32,7 @@
     "onnxruntime-web": "1.31.1",
     "opentype.js": "^2.0.0",
     "pdf-lib": "^1.17",
-    "pdfjs-dist": "6.4.299",
+    "pdfjs-dist": "6.5.438",
     "pptxgenjs": "4.0.1",
     "puppeteer-core": "25.17.0",
     "quickjs-emscripten-core": "0.32.0",
