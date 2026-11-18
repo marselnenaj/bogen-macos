@@ -2,7 +2,7 @@
   "name": "@bogen/macos",
   "productName": "Bogen",
   "private": true,
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Bogen for macOS: the design canvas as a native Mac app",
   "license": "GPL-3.0-or-later",
   "type": "module",
