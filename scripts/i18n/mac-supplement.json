@@ -1,0 +1,496 @@
+{
+ "base": {
+  "ref": "28188161",
+  "commit": "2818816175dfdc592ef4ca82f508e87821bff641",
+  "messages": 3916
+ },
+ "messages": {
+  "A file counts once you set its kind with More, Kind and platforms, or when it records it itself, as a Mac theme or a web page does.": {
+   "en": "A file counts once you set its kind with More, Kind and platforms, or when it records it itself, as a Mac theme or a web page does.",
+   "refs": [
+    "home/Home.tsx:753"
+   ]
+  },
+  "A light and a dark wallpaper": {
+   "en": "A light and a dark wallpaper",
+   "refs": [
+    "panels/MacTheme.tsx:112"
+   ]
+  },
+  "A wallpaper that switches with Light and Dark by itself is a special HEIC file, which Bogen does not make. With Auto you get one PNG for each appearance.": {
+   "en": "A wallpaper that switches with Light and Dark by itself is a special HEIC file, which Bogen does not make. With Auto you get one PNG for each appearance.",
+   "refs": [
+    "panels/mac-theme-words.ts:33"
+   ]
+  },
+  "Accent and highlight colour": {
+   "en": "Accent and highlight colour",
+   "refs": [
+    "panels/mac-theme-words.ts:28"
+   ]
+  },
+  "Accent nearest to System Settings’ {accent}. You choose both in System Settings › Appearance.": {
+   "en": "Accent nearest to System Settings’ {accent}. You choose both in System Settings › Appearance.",
+   "refs": [
+    "panels/MacTheme.tsx:111"
+   ]
+  },
+  "App appearance kit": {
+   "en": "App appearance kit",
+   "refs": [
+    "home/MacThemesSection.tsx:52"
+   ]
+  },
+  "Blue": {
+   "en": "Blue",
+   "refs": [
+    "panels/mac-theme-words.ts:66"
+   ]
+  },
+  "Bogen designs the interface and exports its tokens. It does not compile, sign or ship an app.": {
+   "en": "Bogen designs the interface and exports its tokens. It does not compile, sign or ship an app.",
+   "refs": [
+    "panels/mac-theme-words.ts:49"
+   ]
+  },
+  "Building an app": {
+   "en": "Building an app",
+   "refs": [
+    "panels/mac-theme-words.ts:48"
+   ]
+  },
+  "Dark appearance": {
+   "en": "Dark appearance",
+   "refs": [
+    "panels/MacTheme.tsx:112"
+   ]
+  },
+  "Data only: images, JSON, CSS and a README. Nothing in it runs, and Bogen changes nothing on this Mac.": {
+   "en": "Data only: images, JSON, CSS and a README. Nothing in it runs, and Bogen changes nothing on this Mac.",
+   "refs": [
+    "panels/MacTheme.tsx:139"
+   ]
+  },
+  "Design a Mac theme": {
+   "en": "Design a Mac theme",
+   "refs": [
+    "home/MacThemesSection.tsx:55",
+    "home/MacThemesSection.tsx:59"
+   ]
+  },
+  "Designed for": {
+   "en": "Designed for",
+   "refs": [
+    "panels/MacTheme.tsx:111"
+   ]
+  },
+  "Desktop appearance": {
+   "en": "Desktop appearance",
+   "refs": [
+    "home/MacThemesSection.tsx:51"
+   ]
+  },
+  "Dynamic wallpaper": {
+   "en": "Dynamic wallpaper",
+   "refs": [
+    "panels/mac-theme-words.ts:32"
+   ]
+  },
+  "Exported": {
+   "en": "Exported",
+   "refs": [
+    "panels/mac-theme-words.ts:55"
+   ]
+  },
+  "Exported as files you set in System Settings. Bogen changes nothing on this Mac.": {
+   "en": "Exported as files you set in System Settings. Bogen changes nothing on this Mac.",
+   "refs": [
+    "home/MacThemesSection.tsx:61"
+   ]
+  },
+  "Exported, without: {problems}": {
+   "en": "Exported, without: {problems}",
+   "refs": [
+    "panels/MacTheme.tsx:100"
+   ]
+  },
+  "Exported. Set the wallpaper and appearance in System Settings, as the README in the folder says.": {
+   "en": "Exported. Set the wallpaper and appearance in System Settings, as the README in the folder says.",
+   "refs": [
+    "panels/MacTheme.tsx:100"
+   ]
+  },
+  "Exports as {file}": {
+   "en": "Exports as {file}",
+   "refs": [
+    "panels/MacTheme.tsx:106"
+   ]
+  },
+  "Graphite": {
+   "en": "Graphite",
+   "refs": [
+    "panels/mac-theme-words.ts:73"
+   ]
+  },
+  "Green": {
+   "en": "Green",
+   "refs": [
+    "panels/mac-theme-words.ts:72"
+   ]
+  },
+  "Laying out the boards…": {
+   "en": "Laying out the boards…",
+   "refs": [
+    "home/MacThemesSection.tsx:69"
+   ]
+  },
+  "Light appearance": {
+   "en": "Light appearance",
+   "refs": [
+    "panels/MacTheme.tsx:112"
+   ]
+  },
+  "Light, Dark or Auto": {
+   "en": "Light, Dark or Auto",
+   "refs": [
+    "panels/mac-theme-words.ts:24"
+   ]
+  },
+  "Mac app appearance": {
+   "en": "Mac app appearance",
+   "refs": [
+    "home/ProjectFilters.tsx:37"
+   ]
+  },
+  "Mac desktop": {
+   "en": "Mac desktop",
+   "refs": [
+    "home/ProjectFilters.tsx:37"
+   ]
+  },
+  "Mac theme": {
+   "en": "Mac theme",
+   "refs": [
+    "home/ProjectFilters.tsx:29",
+    "panels/MacTheme.tsx:81",
+    "panels/MacTheme.tsx:82"
+   ]
+  },
+  "Mac theme {name}: desktop": {
+   "en": "Mac theme {name}: desktop",
+   "refs": [
+    "panels/MacTheme.tsx:54"
+   ]
+  },
+  "Mac theme {name}: desktop and your apps": {
+   "en": "Mac theme {name}: desktop and your apps",
+   "refs": [
+    "panels/MacTheme.tsx:54"
+   ]
+  },
+  "Mac theme {name}: your apps": {
+   "en": "Mac theme {name}: your apps",
+   "refs": [
+    "panels/MacTheme.tsx:54"
+   ]
+  },
+  "Mac themes": {
+   "en": "Mac themes",
+   "refs": [
+    "home/ProjectFilters.tsx:29"
+   ]
+  },
+  "Menu bar, Dock, Finder and windows": {
+   "en": "Menu bar, Dock, Finder and windows",
+   "refs": [
+    "panels/mac-theme-words.ts:40"
+   ]
+  },
+  "New Mac theme": {
+   "en": "New Mac theme",
+   "refs": [
+    "home/MacThemesSection.tsx:50"
+   ]
+  },
+  "Newer macOS versions add options such as icon and widget style and folder colour to System Settings › Appearance. The bundle does not include them; set them as you like.": {
+   "en": "Newer macOS versions add options such as icon and widget style and folder colour to System Settings › Appearance. The bundle does not include them; set them as you like.",
+   "refs": [
+    "panels/mac-theme-words.ts:37"
+   ]
+  },
+  "No Mac themes here": {
+   "en": "No Mac themes here",
+   "refs": [
+    "home/ProjectFilters.tsx:29"
+   ]
+  },
+  "No Mac themes here for {platform}": {
+   "en": "No Mac themes here for {platform}",
+   "refs": [
+    "home/ProjectFilters.tsx:29"
+   ]
+  },
+  "No Omarchy themes here": {
+   "en": "No Omarchy themes here",
+   "refs": [
+    "home/ProjectFilters.tsx:30"
+   ]
+  },
+  "No Omarchy themes here for {platform}": {
+   "en": "No Omarchy themes here for {platform}",
+   "refs": [
+    "home/ProjectFilters.tsx:30"
+   ]
+  },
+  "No paired device yet. Pair one under Devices to have this file sync to it over Tailscale.": {
+   "en": "No paired device yet. Pair one under Devices to have this file sync to it over Tailscale.",
+   "refs": [
+    "panels/OmarchyTheme.tsx:318"
+   ]
+  },
+  "Not offered": {
+   "en": "Not offered",
+   "refs": [
+    "panels/mac-theme-words.ts:58"
+   ]
+  },
+  "Omarchy Mobile theme for a phone": {
+   "en": "Omarchy Mobile theme for a phone",
+   "refs": [
+    "panels/OmarchyTheme.tsx:87"
+   ]
+  },
+  "Omarchy Mobile theme for {device}": {
+   "en": "Omarchy Mobile theme for {device}",
+   "refs": [
+    "panels/OmarchyTheme.tsx:87"
+   ]
+  },
+  "Omarchy theme for Omarchy Linux": {
+   "en": "Omarchy theme for Omarchy Linux",
+   "refs": [
+    "panels/OmarchyTheme.tsx:89"
+   ]
+  },
+  "Omarchy themes": {
+   "en": "Omarchy themes",
+   "refs": [
+    "home/ProjectFilters.tsx:30"
+   ]
+  },
+  "On a Mac, install whisper.cpp and ffmpeg with Homebrew ({command}), then download a Whisper model such as {model} into {path}. Bogen finds both by itself.": {
+   "en": "On a Mac, install whisper.cpp and ffmpeg with Homebrew ({command}), then download a Whisper model such as {model} into {path}. Bogen finds both by itself.",
+   "refs": [
+    "ui/VoiceInput.tsx:217"
+   ]
+  },
+  "On an Omarchy device": {
+   "en": "On an Omarchy device",
+   "refs": [
+    "panels/OmarchyTheme.tsx:308"
+   ]
+  },
+  "Orange": {
+   "en": "Orange",
+   "refs": [
+    "panels/mac-theme-words.ts:70"
+   ]
+  },
+  "Other Appearance settings": {
+   "en": "Other Appearance settings",
+   "refs": [
+    "panels/mac-theme-words.ts:36"
+   ]
+  },
+  "PNG, one per appearance the theme is designed for: at a preset’s native resolution, or at the size this Mac currently renders a display at (its backing pixels in the chosen scaled resolution, which may differ from the panel’s native resolution).": {
+   "en": "PNG, one per appearance the theme is designed for: at a preset’s native resolution, or at the size this Mac currently renders a display at (its backing pixels in the chosen scaled resolution, which may differ from the panel’s native resolution).",
+   "refs": [
+    "panels/mac-theme-words.ts:17"
+   ]
+  },
+  "Pink": {
+   "en": "Pink",
+   "refs": [
+    "panels/mac-theme-words.ts:68"
+   ]
+  },
+  "Preview only": {
+   "en": "Preview only",
+   "refs": [
+    "panels/mac-theme-words.ts:57"
+   ]
+  },
+  "Purple": {
+   "en": "Purple",
+   "refs": [
+    "panels/mac-theme-words.ts:67"
+   ]
+  },
+  "Red": {
+   "en": "Red",
+   "refs": [
+    "panels/mac-theme-words.ts:69"
+   ]
+  },
+  "Rendering…": {
+   "en": "Rendering…",
+   "refs": [
+    "panels/MacTheme.tsx:141"
+   ]
+  },
+  "Semantic colours for light and dark, type and spacing, as CSS custom properties, JSON design tokens and an Xcode asset catalog of colour sets.": {
+   "en": "Semantic colours for light and dark, type and spacing, as CSS custom properties, JSON design tokens and an Xcode asset catalog of colour sets.",
+   "refs": [
+    "panels/mac-theme-words.ts:45"
+   ]
+  },
+  "Semantic colours, type and spacing for apps you build": {
+   "en": "Semantic colours, type and spacing for apps you build",
+   "refs": [
+    "home/MacThemesSection.tsx:52"
+   ]
+  },
+  "Setting the wallpaper": {
+   "en": "Setting the wallpaper",
+   "refs": [
+    "panels/mac-theme-words.ts:20"
+   ]
+  },
+  "The bundle records the appearance the theme was designed for. You choose it in System Settings › Appearance.": {
+   "en": "The bundle records the appearance the theme was designed for. You choose it in System Settings › Appearance.",
+   "refs": [
+    "panels/mac-theme-words.ts:25"
+   ]
+  },
+  "The microphone is blocked for Bogen. Allow Bogen in System Settings under Privacy & Security, Microphone, then try again.": {
+   "en": "The microphone is blocked for Bogen. Allow Bogen in System Settings under Privacy & Security, Microphone, then try again.",
+   "refs": [
+    "ui/VoiceInput.tsx:234"
+   ]
+  },
+  "They are illustrations in the previews. macOS draws them itself, and no theme reskins them.": {
+   "en": "They are illustrations in the previews. macOS draws them itself, and no theme reskins them.",
+   "refs": [
+    "panels/mac-theme-words.ts:41"
+   ]
+  },
+  "This computer does not run Omarchy, so nothing is installed here. Export the package above, copy it to the phone, then run {dryRun}, {install} and {apply} there.": {
+   "en": "This computer does not run Omarchy, so nothing is installed here. Export the package above, copy it to the phone, then run {dryRun}, {install} and {apply} there.",
+   "refs": [
+    "panels/OmarchyTheme.tsx:311"
+   ]
+  },
+  "This computer does not run Omarchy, so the theme is not installed or applied here. Export it above, or open this file in Bogen on an Omarchy device and use Install and Apply there.": {
+   "en": "This computer does not run Omarchy, so the theme is not installed or applied here. Export it above, or open this file in Bogen on an Omarchy device and use Install and Apply there.",
+   "refs": [
+    "panels/OmarchyTheme.tsx:312"
+   ]
+  },
+  "This file is not a Mac theme. Make one from Home, under Design a Mac theme.": {
+   "en": "This file is not a Mac theme. Make one from Home, under Design a Mac theme.",
+   "refs": [
+    "panels/MacTheme.tsx:87"
+   ]
+  },
+  "Wallpapers for a {display} until Bogen sees this Mac’s displays": {
+   "en": "Wallpapers for a {display} until Bogen sees this Mac’s displays",
+   "refs": [
+    "home/MacThemesSection.tsx:48"
+   ]
+  },
+  "Wallpapers for each display": {
+   "en": "Wallpapers for each display",
+   "refs": [
+    "panels/mac-theme-words.ts:16"
+   ]
+  },
+  "Wallpapers for {displays}": {
+   "en": "Wallpapers for {displays}",
+   "refs": [
+    "home/MacThemesSection.tsx:47"
+   ]
+  },
+  "What it changes": {
+   "en": "What it changes",
+   "refs": [
+    "panels/MacTheme.tsx:125"
+   ]
+  },
+  "What it changes, export": {
+   "en": "What it changes, export",
+   "refs": [
+    "panels/MacTheme.tsx:55"
+   ]
+  },
+  "What the zip holds": {
+   "en": "What the zip holds",
+   "refs": [
+    "panels/MacTheme.tsx:137"
+   ]
+  },
+  "Yellow": {
+   "en": "Yellow",
+   "refs": [
+    "panels/mac-theme-words.ts:71"
+   ]
+  },
+  "You set it in System Settings › Wallpaper (Add Photo…), per display. Bogen does not change your desktop.": {
+   "en": "You set it in System Settings › Wallpaper (Add Photo…), per display. Bogen does not change your desktop.",
+   "refs": [
+    "panels/mac-theme-words.ts:21"
+   ]
+  },
+  "Your desktop and your own apps, light and dark": {
+   "en": "Your desktop and your own apps, light and dark",
+   "refs": [
+    "home/MacThemesSection.tsx:50"
+   ]
+  },
+  "Your own apps’ appearance": {
+   "en": "Your own apps’ appearance",
+   "refs": [
+    "panels/mac-theme-words.ts:44"
+   ]
+  },
+  "macOS offers a fixed set of accent colours. The bundle names the nearest one to the theme’s accent, and its highlight colour for Highlight colour › Other.": {
+   "en": "macOS offers a fixed set of accent colours. The bundle names the nearest one to the theme’s accent, and its highlight colour for Highlight colour › Other.",
+   "refs": [
+    "panels/mac-theme-words.ts:29"
+   ]
+  },
+  "{device}: connected, the file is synced there": {
+   "en": "{device}: connected, the file is synced there",
+   "refs": [
+    "panels/OmarchyTheme.tsx:316"
+   ]
+  },
+  "{device}: offline, the file syncs when it is back": {
+   "en": "{device}: offline, the file syncs when it is back",
+   "refs": [
+    "panels/OmarchyTheme.tsx:316"
+   ]
+  },
+  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": {
+   "en": "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)",
+   "refs": [
+    "panels/MacTheme.tsx:120"
+   ]
+  },
+  "{display}: {width} × {height} pixels, native resolution": {
+   "en": "{display}: {width} × {height} pixels, native resolution",
+   "refs": [
+    "panels/MacTheme.tsx:120"
+   ]
+  },
+  "{display}: {width} × {height} pixels, size as given": {
+   "en": "{display}: {width} × {height} pixels, size as given",
+   "refs": [
+    "panels/MacTheme.tsx:120"
+   ]
+  }
+ },
+ "retired": [
+  "No themes here",
+  "No themes here for {platform}"
+ ]
+}

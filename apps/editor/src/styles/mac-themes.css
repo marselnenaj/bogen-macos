@@ -1,0 +1,27 @@
+/* Let the theme heading and its explanation use separate lines in a narrow or scaled window. */
+.mac-themes .brands-head {
+  height: auto;
+  min-height: 28px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding-block: 2px;
+}
+.mac-themes .examples-toggle {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  text-align: start;
+}
+.mac-themes .examples-toggle svg { flex: none; }
+.mac-themes .omarchy-themes-hint {
+  flex: 1 1 300px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mac-themes .example-row {
+  height: auto;
+  min-height: 32px;
+  padding-block: 5px;
+}
+.mac-themes .example-kind { min-width: 0; overflow-wrap: anywhere; }

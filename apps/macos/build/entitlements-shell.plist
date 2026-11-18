@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements of Electron's own executables: Bogen.app's main program and its helper apps, which run the editor
+  window. allow-jit as in entitlements.plist, and the hardened runtime's audio input, because the editor's chat and
+  comment boxes record from the microphone for speaking instead of typing (macOS asks the person first, with
+  NSMicrophoneUsageDescription; the recording goes only to Bogen's own local server). No camera, no App Sandbox, no
+  library-validation exception. The bundled node, headless shell and esbuild keep entitlements.plist (allow-jit only).
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+</dict>
+</plist>

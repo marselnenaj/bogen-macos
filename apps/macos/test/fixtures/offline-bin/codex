@@ -1,0 +1,5 @@
+#!/bin/sh
+# Fixture for validation runs: stands in for the real agent CLI so that no test, doctor check or smoke run starts a
+# real `codex`, and nothing contacts a model provider or telemetry. Reports itself as not installed.
+echo "stand-in: no agent CLI in validation runs" >&2
+exit 127

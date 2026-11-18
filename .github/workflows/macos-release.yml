@@ -1,0 +1,100 @@
+name: macOS signed release
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_x64:
+        description: Include the Intel build
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-signed-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      BOGEN_UPDATE_CHECK: 'off'
+      UPDATE_FEED: ${{ vars.BOGEN_MACOS_UPDATE_FEED }}
+      SIGNING_IDENTITY: ${{ vars.BOGEN_MACOS_SIGNING_IDENTITY }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+      - name: Check release prerequisites
+        env:
+          CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          RELEASE_KEY: ${{ secrets.BOGEN_RELEASE_KEY_PEM }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_API_KEY_P8 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          for name in CERTIFICATE CERTIFICATE_PASSWORD RELEASE_KEY APPLE_NOTARY_KEY APPLE_NOTARY_KEY_ID APPLE_NOTARY_ISSUER_ID UPDATE_FEED SIGNING_IDENTITY; do
+            test -n "${!name}" || { echo "Missing release configuration: $name" >&2; exit 1; }
+          done
+      - name: Install locked dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix apps/macos --no-audit --no-fund
+      - name: OTA and app regression tests
+        run: |
+          export PATH="$PWD/apps/macos/test/fixtures/offline-bin:$PATH"
+          npx vitest run apps/macos packages/core packages/server/test/updates.test.ts packages/server/test/release.test.ts
+      - name: Prepare temporary signing credentials
+        env:
+          CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          RELEASE_KEY: ${{ secrets.BOGEN_RELEASE_KEY_PEM }}
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_API_KEY_P8 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          umask 077
+          keychain="$RUNNER_TEMP/bogen-signing.keychain-db"
+          password=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+          echo "::add-mask::$password"
+          printf '%s' "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/bogen-certificate.p12"
+          printf '%s' "$RELEASE_KEY" > "$RUNNER_TEMP/bogen-release.pem"
+          printf '%s' "$APPLE_NOTARY_KEY" > "$RUNNER_TEMP/bogen-notary.p8"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 7200 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/bogen-certificate.p12" -P "$CERTIFICATE_PASSWORD" -t cert -f pkcs12 -k "$keychain" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" "$HOME/Library/Keychains/login.keychain-db"
+          xcrun notarytool store-credentials bogen-ci --key "$RUNNER_TEMP/bogen-notary.p8" --key-id "$APPLE_NOTARY_KEY_ID" --issuer "$APPLE_NOTARY_ISSUER_ID"
+          echo "BOGEN_RELEASE_KEY_FILE=$RUNNER_TEMP/bogen-release.pem" >> "$GITHUB_ENV"
+      - name: Build, sign, notarize and verify
+        working-directory: apps/macos
+        env:
+          INCLUDE_X64: ${{ inputs.include_x64 }}
+        run: |
+          architectures=(--arch arm64)
+          if [[ "$INCLUDE_X64" = true ]]; then architectures+=(--arch x64); fi
+          npm run release -- "${architectures[@]}" --identity "$SIGNING_IDENTITY" --keychain-profile bogen-ci --update-feed "$UPDATE_FEED"
+      - name: Save signed release as an unpublished draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf 'Signed and notarized macOS release. Source: `%s`.\n\nOTA files are verified, but this draft does not publish them to the HTTPS feed. Download them and run apps/macos/scripts/publish-update.mjs.\n' "$GITHUB_SHA" > "$RUNNER_TEMP/bogen-signed-notes.md"
+          gh release create "macos-signed-$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft \
+            --title "Bogen macOS signed build $GITHUB_RUN_NUMBER" --notes-file "$RUNNER_TEMP/bogen-signed-notes.md" \
+            apps/macos/release/release/*.dmg apps/macos/release/updates/*
+      - name: Remove temporary signing files
+        if: ${{ always() }}
+        run: |
+          if [[ -f "$RUNNER_TEMP/bogen-signing.keychain-db" ]]; then security delete-keychain "$RUNNER_TEMP/bogen-signing.keychain-db"; fi
+          rm -f "$RUNNER_TEMP/bogen-certificate.p12" "$RUNNER_TEMP/bogen-release.pem" "$RUNNER_TEMP/bogen-notary.p8"

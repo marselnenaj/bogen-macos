@@ -1,0 +1,42 @@
+{
+  "$comment": "Pinned runtime of Bogen for macOS. scripts/fetch-runtime.mjs downloads these on macOS and refuses any file whose SHA-256 differs from a pinned value; --frozen (CI and releases) also refuses an unpinned one. Provenance of the pins (2026-11-05, recorded by the parent in a normal HTTPS session, no binary executed): Node from nodejs.org's SHASUMS256.txt for v26.13.0; chrome-headless-shell 156.0.8078.80 (revision 1706539) as listed in Chrome for Testing's known-good-versions-with-downloads.json, hash observed from the complete official archive after a zip integrity check. Chrome for Testing publishes no checksum file, so that hash is a pinned observation, not a Google-published checksum.",
+  "bundleId": "dev.bogen.app",
+  "productName": "Bogen",
+  "minimumSystemVersion": "13.0",
+  "architectures": [
+    "arm64",
+    "x64"
+  ],
+  "browserFloor": "156.0.8078.79",
+  "layout": {
+    "$comment": "Where the runtimes sit inside Contents/Resources (and vendor/<arch>). The headless shell's folder must not be named like its executable: codesign would take such a folder for a shallow bundle (scripts/sign-plan.mjs).",
+    "node": "runtime/node/bin/node",
+    "headlessShell": "runtime/headless-shell/chrome-headless-shell"
+  },
+  "electron": {
+    "version": "45.2.3",
+    "chromium": "156.0.8078.80"
+  },
+  "node": {
+    "version": "26.13.0",
+    "url": "https://nodejs.org/dist/v{version}/node-v{version}-darwin-{arch}.tar.gz",
+    "shasums": "https://nodejs.org/dist/v{version}/SHASUMS256.txt",
+    "sha256": {
+      "arm64": "d38bd5e5a2ddce6bbb5ce45e46e208337da4d51fffe611e567fd32073d6439f6",
+      "x64": "525c9b29bb0263d687de60a4cec0e2a6db876a8eb032369e5795eca71e7c358e"
+    }
+  },
+  "headlessShell": {
+    "version": "156.0.8078.80",
+    "url": "https://storage.googleapis.com/chrome-for-testing-public/{version}/{platform}/chrome-headless-shell-{platform}.zip",
+    "platforms": {
+      "arm64": "mac-arm64",
+      "x64": "mac-x64"
+    },
+    "sha256": {
+      "arm64": "ea615baa2e9caf0d02d1898a6562b5f8fa9c35239707dae0f592178df5b986ac",
+      "x64": "535d417d9034cbd11e7dacd1a71aa3d6e1b525e6d5dcd2671eb2532f01481228"
+    },
+    "revision": "1706539"
+  }
+}

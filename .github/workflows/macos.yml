@@ -1,0 +1,164 @@
+# Bogen for macOS: one bounded validation run on a GitHub-hosted Mac, started by hand only.
+#
+# It builds and tests; it never signs for distribution, notarizes or publishes a release, and uses no Apple secrets.
+# Development DMGs go to a short-lived workflow artifact, or an explicitly requested private draft release.
+# Steps and what each proves are in docs/macos/building.md. Actions are pinned to commit SHAs; runtimes are fetched
+# --frozen against the hashes pinned in apps/macos/runtime.json.
+
+name: macOS validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_x64:
+        description: Also package the Intel (x64) app (structural checks only on this arm64 runner)
+        type: boolean
+        default: false
+      private_draft:
+        description: Save DMGs in an unpublished draft (private repositories only; avoids Actions artifact quota)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-validation
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    permissions:
+      contents: write # Only the opt-in private draft step uses the token; checkout never persists credentials.
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      BOGEN_UPDATE_CHECK: 'off'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          uname -m
+          node --version
+          npm --version
+          xcodebuild -version || true
+
+      - name: Install (repository)
+        run: npm ci --no-audit --no-fund
+
+      - name: Install (macOS app)
+        working-directory: apps/macos
+        run: npm ci --no-audit --no-fund
+
+      - name: Fetch pinned runtimes (Node, headless shell) and verify them
+        working-directory: apps/macos
+        run: node scripts/fetch-runtime.mjs --arch arm64 --frozen
+
+      - name: Typecheck
+        run: |
+          npm run typecheck
+          npx tsc -p apps/macos/tsconfig.json
+
+      # Targeted gates only, with fixtures: agent CLIs are offline stand-ins first on PATH, so no test starts a real
+      # claude or codex or reaches a model provider. Renders use the pinned headless shell with its sandbox on.
+      - name: Tests that gate the Mac app (lifecycle, menu bar, Mac themes, platform kinds, reaping, memory, updates, server, sync, large files, branches, theme projects, languages, fonts, icon sets, accessibility check, voice)
+        run: |
+          export PATH="$PWD/apps/macos/test/fixtures/offline-bin:$PATH"
+          export BOGEN_BROWSER="$PWD/apps/macos/vendor/arm64/runtime/headless-shell/chrome-headless-shell"
+          export BOGEN_NO_SANDBOX=0
+          npx vitest run apps/macos packages/server/test/memory-pressure.test.ts packages/server/test/supervised-serve.test.ts \
+            packages/server/test/daemon-probe.test.ts packages/server/test/updates.test.ts packages/server/test/server.test.ts \
+            packages/server/test/relay.test.ts packages/server/test/agents.test.ts packages/server/test/peers.test.ts \
+            packages/server/test/large-file-rendering.test.ts packages/server/test/large-file-mac.test.ts \
+            packages/server/test/mac-theme.test.ts packages/server/test/project-kind.test.ts packages/core \
+            packages/server/test/content-language.test.ts packages/server/test/brand-voice.test.ts \
+            packages/server/test/runners.test.ts packages/server/test/runner-lifecycle.test.ts apps/editor/test/run-catalogs.test.ts \
+            packages/server/test/design-branches.test.ts packages/server/test/theme-projects.test.ts \
+            packages/server/test/theme-consolidate.test.ts packages/server/test/mac-theme-projects.test.ts \
+            packages/server/test/platform-language.test.ts packages/server/test/platform-kinds.test.ts \
+            apps/editor/test/kind-platform.test.ts apps/editor/test/i18n-core.test.ts \
+            apps/editor/test/i18n-preference.test.ts apps/editor/test/i18n-catalogs.test.ts apps/editor/test/mac-i18n.test.ts \
+            packages/server/test/glyph-fonts.test.ts packages/server/test/font-tools.test.ts packages/server/test/icon-set-files.test.ts \
+            packages/server/test/compliance.test.ts packages/server/test/voice.test.ts
+
+      # The interface's words: every catalog of the 49 languages keeps every rule and has every message (the catalog
+      # tests above); the audit exits non-zero on any broken catalog or extraction problem; the Mac app's own messages
+      # add up over the shared ones; the MCP reference and the doc links match the server.
+      - name: Interface languages, inventory and docs
+        run: |
+          node scripts/i18n/audit.ts
+          node scripts/i18n/mac-supplement.ts --check
+          node --import tsx scripts/gen-docs-reference.ts --check
+          node scripts/check-doc-links.mjs
+
+      - name: Build server and editor
+        run: npm run build
+
+      - name: Package the development app (ad-hoc signed)
+        working-directory: apps/macos
+        run: node scripts/package.mjs --arch arm64
+
+      - name: Verify the app, run its server, render, launch and quit it
+        working-directory: apps/macos
+        run: node scripts/verify-app.mjs --app release/dev/arm64/Bogen.app --gui
+
+      - name: Development DMG
+        working-directory: apps/macos
+        run: node scripts/make-dmg.mjs --arch arm64
+
+      # The installer as a person meets it: mounted privately, its window layout, background, volume icon and
+      # Applications link, the app's signature, then a drag install (ditto) into a folder with spaces and non-ASCII in its
+      # path and a run of the installed copy's launcher. Nothing is copied into /Applications.
+      - name: Verify the development DMG
+        working-directory: apps/macos
+        run: node scripts/verify-dmg.mjs --dmg "release/dev/$(node -p "'Bogen-' + require('../../packages/server/package.json').version + '-arm64-dev-unsigned.dmg'")"
+
+      - name: Intel app (structural checks only)
+        if: ${{ inputs.include_x64 }}
+        working-directory: apps/macos
+        run: |
+          node scripts/fetch-runtime.mjs --arch x64 --frozen
+          node scripts/package.mjs --arch x64
+          node scripts/verify-app.mjs --app release/dev/x64/Bogen.app
+          node scripts/make-dmg.mjs --arch x64
+          node scripts/verify-dmg.mjs --dmg "release/dev/$(node -p "'Bogen-' + require('../../packages/server/package.json').version + '-x64-dev-unsigned.dmg'")"
+
+      - name: Sizes and runtime hashes for the record
+        if: always()
+        working-directory: apps/macos
+        run: |
+          du -sh release/dev/*/Bogen.app release/dev/*.dmg 2>/dev/null || true
+          shasum -a 256 vendor/cache/*.tar.gz vendor/cache/*.zip 2>/dev/null || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !inputs.private_draft }}
+        with:
+          name: bogen-macos-dev-unsigned
+          path: apps/macos/release/dev/*.dmg
+          retention-days: 5
+          if-no-files-found: error
+
+      - name: Save development DMGs in a private draft
+        if: ${{ inputs.private_draft }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY" --jq '.private')" = true || {
+            echo 'Development DMGs may only be saved to a private repository.' >&2
+            exit 1
+          }
+          printf 'Private development build, ad-hoc signed and not notarized. OTA installation is disabled.\n\nSource: `%s`\nBuild: %s/%s/actions/runs/%s\n\nApple Silicon is exercised on the runner; Intel receives structural verification only.\n' \
+            "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/bogen-macos-notes.md"
+          gh release create "macos-dev-$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --draft --prerelease \
+            --title "Bogen macOS development $GITHUB_RUN_NUMBER" \
+            --notes-file "$RUNNER_TEMP/bogen-macos-notes.md" apps/macos/release/dev/*.dmg

@@ -1,0 +1,55 @@
+#!/bin/sh
+# Managed by Bogen. The `bogen` command of Bogen.app (Contents/Resources/bin/bogen).
+#
+# Runs the app's own server code on the app's own Node, against the app's data folder and port, so that `bogen mcp`
+# in an agent's MCP config reaches the app. When the app is not running, `bogen mcp` opens it in the background
+# (BOGEN_MACOS_APP_ID) instead of starting a server of its own. Settings > Install command line tool links this
+# file to ~/.local/bin/bogen.
+
+set -u
+
+self=$0
+# Follow the ~/.local/bin/bogen link back into the bundle.
+while [ -L "$self" ]; do
+  link=$(/usr/bin/readlink "$self")
+  case $link in
+  /*) self=$link ;;
+  *) self=$(/usr/bin/dirname "$self")/$link ;;
+  esac
+done
+resources=$(cd "$(/usr/bin/dirname "$self")/.." && pwd -P) || exit 1
+support="$HOME/Library/Application Support/Bogen"
+
+# The port and bundle id the app last started with; only these two keys, only plain values.
+if [ -z "${BOGEN_PORT:-}" ] && [ -f "$support/cli.env" ]; then
+  while IFS= read -r line; do
+    case $line in
+    BOGEN_PORT=*)
+      value=${line#BOGEN_PORT=}
+      case $value in '' | *[!0-9]*) ;; *) BOGEN_PORT=$value; export BOGEN_PORT ;; esac
+      ;;
+    BOGEN_MACOS_APP_ID=*)
+      value=${line#BOGEN_MACOS_APP_ID=}
+      case $value in '' | *[!A-Za-z0-9.-]*) ;; *) BOGEN_MACOS_APP_ID=$value; export BOGEN_MACOS_APP_ID ;; esac
+      ;;
+    esac
+  done <"$support/cli.env"
+fi
+
+BOGEN_HOME=${BOGEN_HOME:-$support/data}
+BOGEN_MACOS_APP_ID=${BOGEN_MACOS_APP_ID:-dev.bogen.app}
+BOGEN_SELF_COMMAND="$resources/bin/bogen"
+# The app updates itself; the npm updater of the server code has nothing to do here.
+BOGEN_UPDATE_CHECK=off
+export BOGEN_HOME BOGEN_MACOS_APP_ID BOGEN_SELF_COMMAND BOGEN_UPDATE_CHECK
+# runtime.json's layout.headlessShell (a test keeps the two equal).
+[ -x "$resources/runtime/headless-shell/chrome-headless-shell" ] && {
+  BOGEN_BROWSER="$resources/runtime/headless-shell/chrome-headless-shell"
+  export BOGEN_BROWSER
+}
+# The export browser always keeps its sandbox; the bundled Node runs only the bundled server. Nothing else is removed.
+BOGEN_NO_SANDBOX=0
+export BOGEN_NO_SANDBOX
+unset NODE_OPTIONS
+
+exec "$resources/runtime/node/bin/node" "$resources/server/dist/cli.js" "$@"

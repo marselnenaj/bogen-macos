@@ -1,0 +1,1020 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Copy, Images, Layers, Loader2, PanelRightClose, Paperclip, Phone, Pencil, Plus, RotateCcw, Sparkles, Square, X } from 'lucide-react';
+import { isRunnerId, MAX_DIRECTION_LANES, LANE_COLORS, inferIntent, stripSayTags, type RunIntent, type RunLanguageChoice } from '@bogen/core';
+import { api, resolveAsset, type ConversationSummary, type Runner } from '../lib/api.ts';
+import type { LaneChoice, RunnerCatalog } from '../lib/agent-api.ts';
+import { collabApi, type RemoteRunner } from '../lib/collab-api.ts';
+import { conversationFor } from '../lib/conversation.ts';
+import { onServerEvent } from '../lib/events.ts';
+import { camera } from '../state/camera.ts';
+import type { ChatChrome } from '../state/chrome-layout.ts';
+import { useSettings } from '../state/settings.ts';
+import { editor, useEditor, type PromptMessage } from '../state/store.ts';
+import { session } from '../doc/session.ts';
+import { IconButton, SelectField } from '../ui/controls.tsx';
+import { Markdown } from '../ui/Markdown.tsx';
+import { MicButton, useVoice, VoiceNotice, VoiceRecording } from '../ui/VoiceInput.tsx';
+import { CallPanel } from '../call/CallPanel.tsx';
+import { startCall, useCall } from '../call/call-session.ts';
+import { joinWords } from '../ui/voice-state.ts';
+import { msg } from '../i18n/core.ts';
+import { useT } from '../i18n/react.ts';
+import { t } from '../i18n/store.ts';
+import { shortAgo } from '../phone/phone-api.ts';
+import { addImages, atBottom, chatTurns, clampChatWidth, contextChips, elapsed, lastUserMessage, MAX_CHAT_IMAGES, replyText, type ChatTurn } from './chat-state.ts';
+import { stepLines } from './collab-words.ts';
+import { effectiveLanguage, LanguageChoice, languageNote, useBrandVoice, useFileLanguage } from './ContentLanguage.tsx';
+import { CHAT_FOCUS_EVENT, newChat, openChat, rebuildStoredImage, restoreChat, sendPrompt, setChatOpen, startRace, stopPrompt } from './prompt-actions.ts';
+import { screenRedoPrompt } from './redo-screen.ts';
+import { runnerName, useRunnerCatalogs, useRunSettings } from './RunChoice.tsx';
+import { RunResult } from './RunResult.tsx';
+import { AgentPicker, ChatBranch, ChatPicker, loadSkills, ModeIcon, ModePicker, modeWords, pickerItems, SkillSheet, TraceLink, VariationControls, type ChatSkill, type PickerItem } from './ChatExtras.tsx';
+import { keptMentions, loadVariation, pickerQuery, proposalVariation, raceVariation, saveVariation, type Mention, type VariationChoice } from './chat-extras-state.ts';
+
+/**
+ * The chat with an agent, one per file, docked beside the canvas (or over it in a narrow window). It runs the
+ * person's own CLI through the server; no keys live here. The conversation is kept on the server per file
+ * (conversations.ts), so each message reaches a fresh CLI with what was said before, whichever CLI answered.
+ * This is the former prompt bar, with everything it did: the review modes, the runner and model, races,
+ * proposals, critiques, the redo of a screen, the design language, and an image pasted to rebuild as layers.
+ */
+
+type Review = 'direct' | 'proposal' | 'directions' | 'critique';
+const REVIEW_KEY = 'bogen-prompt-review';
+const RUNNER_KEY = 'bogen-prompt-runner';
+const LANES_KEY = 'bogen-prompt-lanes';
+const MAX_LANES = MAX_DIRECTION_LANES;
+
+function stored(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function remember(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // It lasts for this tab then.
+  }
+}
+
+function storedLanes(): LaneChoice[] {
+  try {
+    const parsed: unknown = JSON.parse(stored(LANES_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((l): l is LaneChoice => typeof l?.runner === 'string').slice(0, MAX_LANES) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Three lanes to start with: both CLIs when there are two, with the model each uses for the prompt. */
+function defaultLanes(available: string[]): LaneChoice[] {
+  if (!available.length) return [];
+  const order = available.length > 1 ? [available[0]!, available[1]!, available[0]!] : [available[0]!, available[0]!, available[0]!];
+  return order.map((runner) => ({ runner }));
+}
+
+/** Runners on paired devices, as choices: "Claude Code on PC". */
+function remoteOptions(offers: RemoteRunner[]): { value: string; label: string }[] {
+  return offers.flatMap((o) => o.runners.filter((r) => r.available).map((r) => ({ value: `${r.id}@${o.deviceId}`, label: t('{runner} on {device}', { runner: runnerName(r.id), device: o.device }) })));
+}
+
+const REVIEW_WORDS: Record<Review, string> = { direct: msg('Change it'), proposal: msg('Propose'), directions: msg('Directions'), critique: msg('Critique') };
+
+/** How a message was asked, in words: a review mode the server keeps (proposal, critique, directions), or Change it. */
+function reviewWords(review: string | undefined): string {
+  return t(REVIEW_WORDS[(review ?? 'direct') as Review] ?? REVIEW_WORDS.direct);
+}
+
+/** Who answered, in words: a runner's id as its name, a name already given (on another device) as it is. */
+/** The model Bogen picked for a request by its size, as the chat shows it: "Sonnet · small change". */
+function sizedWords(size: 'small' | 'large' | 'answer', model: string): string {
+  return size === 'small' ? t('{model} · small change', { model }) : size === 'answer' ? t('{model} · question', { model }) : t('{model} · large request', { model });
+}
+
+function whoWords(runner: string | undefined): string {
+  if (!runner) return t('Agent');
+  return isRunnerId(runner) ? runnerName(runner) : runner;
+}
+
+/** Who races: a runner and a model per lane, two to sixteen lanes. */
+function RaceLanes({ lanes, onChange, runners, catalogs }: { lanes: LaneChoice[]; onChange: (lanes: LaneChoice[]) => void; runners: Runner[]; catalogs: Record<string, RunnerCatalog> | undefined }) {
+  const t = useT();
+  const available = runners.filter((r) => r.available);
+  // The prompt's own model picker is hidden for a race, so the lanes ask for their runners' catalogs themselves.
+  useRunnerCatalogs(lanes.map((l) => l.runner));
+  const update = (i: number, patch: Partial<LaneChoice>) => onChange(lanes.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  return (
+    <div className="prompt-race-settings">
+      <div className="prompt-lane-count">
+        <span>{t('Runs')}</span>
+        <SelectField value={String(lanes.length)} options={Array.from({ length: MAX_LANES - 1 }, (_, i) => ({ value: String(i + 2), label: String(i + 2) }))} title={t('Runs')} testId="prompt-lane-count" onChange={(value) => {
+          const count = Number(value);
+          onChange(Array.from({ length: count }, (_, i) => lanes[i] ?? { runner: available[i % available.length]?.id ?? runners[0]?.id ?? 'claude' }));
+        }} />
+      </div>
+      <div className="prompt-lanes" data-testid="prompt-lanes">
+        {lanes.map((lane, i) => {
+          const models = catalogs?.[lane.runner]?.models ?? [];
+          return (
+            <span key={i} className="prompt-lane" data-testid="prompt-lane">
+              <span className="lane-index" aria-hidden="true">{i + 1}</span>
+              <span className="lane-dot" style={{ '--lane': LANE_COLORS[i % LANE_COLORS.length] } as React.CSSProperties} />
+              <SelectField className="prompt-lane-runner" value={lane.runner} options={available.map((r) => ({ value: r.id, label: runnerName(r.id) }))} onChange={(runner) => update(i, { runner, model: undefined })} title={t('Which CLI runs this lane')} testId="prompt-lane-runner" />
+              <SelectField className="prompt-lane-model" value={lane.model ?? ''} options={[{ value: '', label: t('Its model') }, ...models.map((m) => ({ value: m.id, label: m.label }))]} onChange={(model) => update(i, { model: model || undefined })} title={t('Model for this lane. Its model is what the prompt uses for this runner.')} testId="prompt-lane-model" />
+              {lanes.length > 2 ? <IconButton icon={<X size={11} />} title={t('Take this lane out')} onClick={() => onChange(lanes.filter((_, j) => j !== i))} testId="prompt-lane-remove" /> : null}
+            </span>
+          );
+        })}
+        {lanes.length < MAX_LANES && available.length ? <button type="button" className="run-link" onClick={() => onChange([...lanes, { runner: available[0]!.id }])} data-testid="prompt-lane-add"><Plus size={11} /> {t('Runner')}</button> : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- where the panel sits
+
+/** Drags the chat's left edge. Its width is in UI pixels, kept with the other panels'. */
+function ChatResizer() {
+  const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    const startX = e.clientX;
+    const start = editor().chatWidth;
+    const uiScale = useSettings.getState().uiScale;
+    const move = (ev: PointerEvent) => editor().set({ chatWidth: clampChatWidth(start - (ev.clientX - startX) / uiScale) });
+    const up = () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      camera.measureViewport();
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  };
+  const t = useT();
+  return (
+    <div
+      className="resizer resizer-right" role="separator" aria-orientation="vertical" aria-label={t('Chat width')} tabIndex={0}
+      onPointerDown={onDown}
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        e.stopPropagation();
+        editor().set({ chatWidth: clampChatWidth(editor().chatWidth + (e.key === 'ArrowLeft' ? 16 : -16)) });
+      }}
+      data-testid="resizer-chat"
+    />
+  );
+}
+
+/**
+ * Where the chat lives: one element for the editor's life, so what is being written survives docking, a drawer
+ * and closing. Docked, it is a column between the canvas and the inspector; as a drawer it lies over the canvas at
+ * its right edge, and Esc closes it.
+ */
+export function ChatHost({ lay, minimal }: { lay: ChatChrome; minimal: boolean }) {
+  const open = useEditor((s) => s.prompt.open);
+  // The full call panel shows in the call's own file; anywhere else the call bar stands for it.
+  const fileId = useEditor((e) => e.fileId);
+  const docked = !minimal && open && lay.chat === 'docked';
+  const drawer = !minimal && open && lay.chat === 'drawer';
+  const shown = docked || drawer;
+  useEffect(() => {
+    const f = requestAnimationFrame(() => camera.measureViewport());
+    return () => cancelAnimationFrame(f);
+  }, [docked, drawer, lay.chatPx]);
+  return (
+    <div
+      className={drawer ? 'panel-slot panel-drawer is-right chat-slot is-drawer' : 'panel-slot chat-slot'}
+      style={drawer ? { width: lay.chatPx, right: lay.right === 'docked' && !minimal ? lay.rightPx : 0 } : undefined}
+      hidden={!shown}
+      inert={!shown}
+      data-testid="chat-slot"
+      data-dock={docked ? 'docked' : drawer ? 'drawer' : 'closed'}
+      onKeyDown={drawer ? (e) => {
+        if (e.key !== 'Escape' || e.defaultPrevented) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setChatOpen(false);
+        requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="prompt-toggle"]')?.focus());
+      } : undefined}
+    >
+      {docked ? <ChatResizer /> : null}
+      <ChatPanel drawer={drawer} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- the panel
+
+export function ChatPanel({ drawer = false }: { drawer?: boolean }) {
+  const t = useT();
+  const prompt = useEditor((s) => s.prompt);
+  const fileId = useEditor((s) => s.fileId);
+  // The call in this file shows as a card under the chat's header; anywhere else the call bar stands for it.
+  const calling = useCall((c) => c.active && c.fileId === fileId);
+  const callSaid = useCall((c) => c.captions.length > 0);
+  const selection = useEditor((s) => s.selection);
+  const [view, setView] = useState<'chat' | 'history'>('chat');
+  const [text, setText] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(0);
+  const [runners, setRunners] = useState<Runner[] | null>(null);
+  const [remote, setRemote] = useState<RemoteRunner[]>([]);
+  const [runner, setRunnerState] = useState('');
+  // Critique changes nothing, so it is never the remembered mode: it applies to one message and the chat goes back to the
+  // remembered mode after sending. An older build could have stored it; that reads as Change it.
+  const [storedReview, setReviewState] = useState<Review>(() => { const v = stored(REVIEW_KEY) as Review | null; return v && v !== 'critique' ? v : 'direct'; });
+  const review = prompt.redo ? 'direct' : storedReview;
+  const [lanes, setLanesState] = useState<LaneChoice[]>(storedLanes);
+  const [lastReview, setLastReview] = useState<Review | null>(null);
+  // What the request means for the existing design, read as the person types; one click overrides it for this message.
+  const [intentOverride, setIntentOverride] = useState<RunIntent | null>(null);
+  // The design content language for this one request, over the file's. Choosing it starts nothing; Send does.
+  const [language, setLanguage] = useState<RunLanguageChoice>({});
+  const [dragging, setDragging] = useState(false);
+  // How far Propose and Directions go, and what they vary; a skill chosen with /, and what was mentioned with @.
+  const [variation, setVariationState] = useState<VariationChoice>(loadVariation);
+  const [skill, setSkill] = useState<ChatSkill | null>(null);
+  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [caret, setCaret] = useState(0);
+  const [pickerIndex, setPickerIndex] = useState(0);
+  const [pickerClosed, setPickerClosed] = useState<number | null>(null);
+  const [skills, setSkills] = useState<ChatSkill[]>([]);
+  const [skillSheet, setSkillSheet] = useState<{ nodeId: string; name: string } | null>(null);
+  const [closed, setClosed] = useState<{ branch?: string; into?: string } | undefined>(undefined);
+  const fileLanguage = useFileLanguage();
+  const brandVoice = useBrandVoice(prompt.open ? fileId : null);
+  const settings = useRunSettings();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const setLanes = (next: LaneChoice[]) => {
+    setLanesState(next);
+    remember(LANES_KEY, JSON.stringify(next));
+  };
+  const setRunner = (id: string) => {
+    setRunnerState(id);
+    remember(RUNNER_KEY, id);
+  };
+  const setReview = (value: Review) => {
+    setReviewState(value);
+    if (value !== 'critique') remember(REVIEW_KEY, value);
+  };
+  const setVariation = (value: VariationChoice) => {
+    setVariationState(value);
+    saveVariation(value);
+  };
+  const focusInput = useCallback(() => requestAnimationFrame(() => inputRef.current?.focus()), []);
+  const voice = useVoice({ use: 'chat', onText: (words) => setText((current) => joinWords(current, words)), onDone: focusInput });
+
+  // Who can run this, here and on paired devices that allow this one: asked when the chat opens, and again each
+  // time it is asked to take the focus, since a device may have allowed it meanwhile.
+  const loadRunners = useCallback(() => {
+    void collabApi.remoteRunners().then((offers) => {
+      setRemote(offers);
+      const saved = stored(RUNNER_KEY);
+      if (saved?.includes('@') && remoteOptions(offers).some((o) => o.value === saved)) setRunnerState((r) => r || saved);
+    }, () => setRemote([]));
+    api.runners().then((list) => {
+      setRunners(list);
+      const saved = stored(RUNNER_KEY);
+      setRunnerState((r) => r || (list.some((x) => x.id === saved && x.available) ? saved! : list.find((x) => x.available)?.id) || '');
+      const available = list.filter((x) => x.available).map((x) => x.id);
+      setLanesState((current) => (current.length >= 2 && current.every((l) => available.includes(l.runner)) ? current : defaultLanes(available)));
+    }).catch(() => setRunners([]));
+  }, []);
+
+  useEffect(() => {
+    const focus = () => {
+      setView('chat');
+      inputRef.current?.focus();
+      loadRunners();
+    };
+    window.addEventListener(CHAT_FOCUS_EVENT, focus);
+    return () => window.removeEventListener(CHAT_FOCUS_EVENT, focus);
+  }, [loadRunners]);
+  useEffect(() => { if (!prompt.redo) return; setText(''); setIntentOverride('revise'); setLanguage({}); inputRef.current?.focus(); }, [prompt.redo?.id]);
+
+  // What is selected goes with the message, as it changes; a chip taken out stays out until the selection changes.
+  useEffect(() => {
+    const st = editor();
+    if (!st.prompt.open || st.prompt.redo || st.prompt.running) return;
+    if (st.prompt.nodeIds.join() !== selection.join()) st.set({ prompt: { ...st.prompt, nodeIds: selection } });
+  }, [selection]);
+
+  useEffect(() => {
+    if (!prompt.open) return;
+    void restoreChat();
+    loadRunners();
+  }, [prompt.open, fileId, loadRunners]);
+
+  // A mode with no language left to apply it to (the file default was cleared meanwhile) goes back to plain writing.
+  const anyLanguage = Boolean(effectiveLanguage(language, fileLanguage, brandVoice));
+  useEffect(() => {
+    if (!anyLanguage && language.mode) setLanguage({});
+  }, [anyLanguage, language.mode]);
+
+  // A new file starts with an empty field.
+  useEffect(() => {
+    setText('');
+    setImages([]);
+    setView('chat');
+    setSkill(null);
+    setMentions([]);
+  }, [fileId]);
+
+  // Words handed over from elsewhere in the editor go into the field once, to be read and sent by the person.
+  useEffect(() => {
+    const draft = prompt.draft;
+    if (!draft) return;
+    setText(draft.text);
+    // Words handed over to fix something are a change request, whatever mode the chat was left in.
+    setReview(draft.review ?? 'direct');
+    setView('chat');
+    inputRef.current?.focus();
+    editor().set({ prompt: { ...editor().prompt, draft: undefined } });
+  }, [prompt.draft?.id]);
+
+  // Whether this chat is over: its branch in the repository was merged.
+  const conversationId = fileId ? conversationFor(fileId) : '';
+  useEffect(() => {
+    if (!prompt.open || !fileId || !conversationId) return;
+    let live = true;
+    const load = () => void api.conversation(fileId, conversationId).then((c) => { if (live) setClosed((c as { closed?: { branch?: string; into?: string } }).closed); }, () => {});
+    load();
+    const off = onServerEvent((e) => { if (e.t === 'conversation' && e.fileId === fileId) load(); });
+    return () => { live = false; off(); };
+  }, [prompt.open, fileId, conversationId, prompt.messages.length]);
+
+  const available = runners?.filter((r) => r.available) ?? [];
+  const elsewhere = remoteOptions(remote);
+  const none = runners !== null && !available.length && !elsewhere.length;
+  // A runner on another device is "claude@<device id>".
+  const [runnerId = '', deviceId] = runner.split('@');
+  const deviceName = deviceId ? remote.find((r) => r.deviceId === deviceId)?.device : undefined;
+
+  const { snap } = session();
+  const target = prompt.nodeIds.filter((id) => snap.nodes.has(id));
+  // A race works on one layer: the selected one, or the only artboard on the page.
+  const pageTop = prompt.open ? snap.children(editor().pageId ?? '') : [];
+  const raceTarget = target.length === 1 ? target[0] : !target.length && pageTop.length === 1 ? pageTop[0] : undefined;
+  // The same reading the server makes: a redo of existing work goes into a revision, a new page only when asked for.
+  const inferred = inferIntent(text);
+  // A translation changes the layers in place; a language version is a branch the server opens. Neither is a redo.
+  const languageMode = language.mode ?? 'write';
+  const intent: RunIntent = prompt.redo ? 'revise' : intentOverride ?? (languageMode !== 'write' ? 'edit' : inferred === 'revise' && !pageTop.length ? 'edit' : inferred);
+  const lang = effectiveLanguage(language, fileLanguage, brandVoice);
+  const languageLine = languageNote(language, lang);
+  const chosenLanguage = language.tag || language.mode ? language : undefined;
+  const names = target.map((id) => ({ id, name: snap.nodes.get(id)?.name ?? id }));
+  const runnerLabel = runnerName(runnerId || runner);
+  // The / and @ menu, for the word the caret is at.
+  const asked = pickerQuery(text, caret);
+  const artboard = raceTarget && snap.nodes.get(raceTarget)?.artboard ? { id: raceTarget, name: snap.nodes.get(raceTarget)!.name } : null;
+  const picking = asked && pickerClosed !== asked.start ? pickerItems(asked.trigger, asked.query, skills, artboard) : null;
+  useEffect(() => {
+    if (asked?.trigger === '/' && !skills.length) void loadSkills().then(setSkills);
+  }, [asked?.trigger, skills.length]);
+  useEffect(() => { setPickerIndex(0); }, [asked?.trigger, asked?.query]);
+  const pick = (item: PickerItem) => {
+    if (!asked) return;
+    const before = text.slice(0, asked.start);
+    const after = text.slice(caret);
+    if (item.kind === 'skill') {
+      setSkill({ id: item.id, name: item.label, purpose: item.detail, customized: item.custom });
+      setText(`${before}${after.replace(/^\s+/, '')}`);
+    } else if (item.kind === 'save-skill') {
+      setText(`${before}${after.replace(/^\s+/, '')}`);
+      setSkillSheet({ nodeId: item.id, name: artboard?.name ?? item.label });
+    } else {
+      const word = item.label;
+      setMentions((list) => [...list.filter((m) => !(m.kind === item.kind && m.id === item.id)), { kind: item.kind, id: item.id, name: word }]);
+      const next = `${before}@${word} ${after.replace(/^\s+/, '')}`;
+      setText(next);
+      // The caret goes after the mention, unless the person typed on meanwhile.
+      requestAnimationFrame(() => { const at = before.length + word.length + 2; if (inputRef.current?.value !== next) return; inputRef.current.setSelectionRange(at, at); setCaret(at); });
+    }
+    focusInput();
+  };
+
+  const submit = (override?: string) => {
+    const typed = override ?? text;
+    const v = prompt.redo ? screenRedoPrompt(typed) : typed.trim() || (review === 'critique' ? 'Critique this.' : images.length ? 'Look at the image.' : '');
+    if (!v || !runner || prompt.running || prompt.restoring || uploading) return;
+    if (prompt.redo) {
+      const doc = session().doc;
+      if (!doc.getNode(prompt.redo.nodeId)?.artboard || doc.pageOf(prompt.redo.nodeId) !== editor().pageId) {
+        editor().set({ prompt: { ...editor().prompt, redo: undefined } });
+        editor().showToast(t('Nothing selected'));
+        return;
+      }
+    }
+    // Never quietly a translation of the original: a version needs the branch only Change it makes.
+    if (languageMode === 'add' && review !== 'direct') return void editor().showToast(t('Needs Change it: the version is a branch of the whole design.'));
+    voice.dismiss();
+    if (review === 'directions') {
+      if (!raceTarget) return void editor().showToast(t('Select the one layer the directions are for.'));
+      if (lanes.length < 2) return void editor().showToast(t('A race needs at least two runners.'));
+      if (override === undefined) setText('');
+      setLastReview(review);
+      setLanguage({});
+      void startRace(v, raceTarget, lanes, chosenLanguage, raceVariation(variation));
+      return;
+    }
+    const said = keptMentions(v, mentions);
+    const varied = review === 'proposal' ? proposalVariation(variation) : undefined;
+    setMentions([]);
+    if (override === undefined) setText('');
+    const sentImages = images;
+    setImages([]);
+    setLastReview(review);
+    setIntentOverride(null);
+    setLanguage({});
+    // On another device, that device's own choice for the prompt applies.
+    const { model, effort } = deviceId ? {} : settings?.settings.runners[runnerId]?.prompt ?? {};
+    const redo = prompt.redo;
+    if (redo) {
+      // A new explicit screen request must not resume another screen's draft from the previous chat.
+      newChat();
+      setReview('direct');
+      editor().set({ prompt: { ...editor().prompt, redo: undefined } });
+    }
+    if (review === 'critique') { const back = stored(REVIEW_KEY) as Review | null; setReviewState(back && back !== 'critique' ? back : 'direct'); }
+    void sendPrompt(v, runnerId, {
+      ...(model ? { model } : {}), ...(effort ? { effort } : {}),
+      ...(review !== 'direct' ? { review } : languageMode === 'add' ? {} : { intent }),
+      ...(deviceId ? { device: deviceId } : {}), ...(chosenLanguage ? { language: chosenLanguage } : {}),
+      ...(sentImages.length ? { images: sentImages } : {}),
+      ...(skill ? { discipline: skill.id } : {}), ...(said.length ? { mentions: said.map(({ kind, id }) => ({ kind, id })) } : {}), ...(varied ? { variation: varied } : {}),
+    }, { context: [...(skill ? [t('Skill: {name}', { name: skill.name })] : []), ...names.map((n) => n.name)], runnerLabel: deviceName ? t('{runner} on {device}', { runner: runnerLabel, device: deviceName }) : runnerId, review });
+  };
+
+  /** A first ask from the empty chat goes into the field with its mode, to be read and sent by the person. */
+  const startWith = (words: string, mode: Review) => {
+    setReview(mode);
+    setText(words);
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(words.length, words.length);
+      setCaret(words.length);
+    });
+  };
+
+  const attach = async (files: File[]) => {
+    const pictures = files.filter((f) => f.type.startsWith('image/'));
+    if (!pictures.length) return void editor().showToast(t('Only images go with a message here. Attach other files to a comment.'));
+    for (const file of pictures) {
+      setUploading((n) => n + 1);
+      try {
+        const asset = await api.upload(file);
+        setImages((current) => {
+          const { images: next, dropped } = addImages(current, [asset.src]);
+          if (dropped) editor().showToast(t.n(MAX_CHAT_IMAGES, 'At most {count} image goes with a message.', 'At most {count} images go with a message.'));
+          return next;
+        });
+      } catch (err) {
+        editor().showToast(t('Could not add the image. {error}', { error: (err as Error).message }));
+      } finally {
+        setUploading((n) => n - 1);
+      }
+    }
+    inputRef.current?.focus();
+  };
+
+  const editLast = () => {
+    const last = lastUserMessage(prompt.messages);
+    if (!last) return;
+    setText(last.text);
+    focusInput();
+  };
+
+  if (!prompt.open) return <section className="chat" data-testid="prompt-closed" hidden />;
+
+  const intentNote = review !== 'direct' || (!text.trim() && !prompt.redo) || (languageMode !== 'write' && !intentOverride) ? null : intent === 'revise'
+    ? { say: t('Redo: goes into a revision next to the original, to accept or discard.'), other: t('Change it in place'), to: 'edit' as const }
+    : intent === 'new_page' ? { say: t('Makes a new page.'), other: t('Not a new page'), to: 'edit' as const }
+    : intentOverride === 'edit' && inferred !== 'edit' ? { say: t('Changes the existing layers in place.'), other: inferred === 'revise' ? t('Redo as a revision') : t('Make a new page'), to: inferred } : null;
+
+  const label = target.length === 1 ? names[0]!.name : target.length ? t.n(target.length, '{count} layer', '{count} layers') : t('This page');
+  // The same, inside a sentence.
+  const where = target.length ? label : t('this page');
+  const cost = review === 'directions'
+    ? ` · ${t.n(lanes.length, '{count} run, each on your own plan', '{count} runs, each on your own plan')}`
+    : deviceId ? ` · ${deviceName ? t('runs on {device}, its plan, and comes back by sync', { device: deviceName }) : t('runs on another device, its plan, and comes back by sync')}` : '';
+  const agentName = deviceName ? t('{runner} on {device}', { runner: runnerLabel, device: deviceName }) : runnerLabel || t('Your agent');
+  // What Send will do, in one sentence under the field: the mode, who, and on what.
+  const modeLine = review === 'proposal' ? (proposalVariation(variation)?.count ?? 1) > 1 ? t.n(variation.count, 'Changes go into {count} copy next to {target}. You accept or discard it.', 'Changes go into {count} copies next to {target}. You accept or discard them.', { target: where }) : t('Changes go into a copy next to {target}. You accept or discard it.', { target: where })
+    : review === 'critique' ? t('Notes as comments on {target}. Nothing changes.', { target: where })
+    : review === 'directions' ? t('Several runs, each in its own copy of {target}, side by side.', { target: where })
+    : intentNote ? t('{agent} works on {target}.', { agent: agentName, target: where })
+    : t('{agent} edits {target}. Undo takes the whole run back.', { agent: agentName, target: where });
+  // The model in short on its button; the sheet names the agent, the model and the effort.
+  const catalog = settings?.catalogs[runnerId];
+  const chosen = deviceId ? undefined : settings?.settings.runners[runnerId]?.prompt;
+  const modelName = chosen?.model ? catalog?.models.find((m) => m.id === chosen.model)?.label ?? chosen.model : catalog?.defaultModel;
+  const effortName = chosen?.effort ? chosen.effort.charAt(0).toUpperCase() + chosen.effort.slice(1) : undefined;
+  const agentSummary = deviceId ? agentName : [modelName ?? runnerLabel, effortName].filter(Boolean).join(' · ');
+  const runnerOptions = runners ? [...runners.map((r) => ({ value: r.id, label: r.available ? runnerName(r.id) : r.reason && (r.installed || r.checked) ? t('{runner} (not available)', { runner: runnerName(r.id) }) : t('{runner} (not found)', { runner: runnerName(r.id) }), disabled: !r.available })), ...elsewhere] : [];
+  const showNotes = lastReview === 'critique' && !prompt.running && prompt.messages.length > 0;
+  const placeholder = prompt.restoring ? t('Loading') : none
+    ? t('Install {claude} or {codex} to use this', { claude: 'claude', codex: 'codex' })
+    : prompt.running ? t('{agent} is working. Stop it, or wait for its answer.', { agent: runnerLabel })
+    : review === 'critique'
+      ? target.length ? t('What to look at in {target}, or just {key}', { target: label, key: 'Enter' }) : t('What to look at in this page, or just {key}', { key: 'Enter' })
+      : target.length ? t('Ask about {target}', { target: label }) : t('Ask about this page');
+  const canSend = Boolean(text.trim() || images.length || review === 'critique' || prompt.redo) && Boolean(runner) && !uploading && !prompt.restoring;
+  const title = prompt.messages.find((m) => m.role === 'user')?.text.replace(/\s+/g, ' ').trim();
+
+  return (
+    <section
+      className={`chat${dragging ? ' is-dropping' : ''}`}
+      data-ui
+      data-testid="prompt"
+      aria-label={t('Chat with your agent')}
+      aria-busy={prompt.restoring || prompt.running}
+      onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragging(true); } }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+      onDrop={(e) => {
+        setDragging(false);
+        const files = [...e.dataTransfer.files];
+        if (!files.length) return;
+        e.preventDefault();
+        void attach(files);
+      }}
+    >
+      {view === 'history' ? (
+        <>{calling ? <CallPanel /> : null}<ChatHistory fileId={fileId} running={prompt.running} onBack={() => setView('chat')} onPick={(id) => { void openChat(id).then(() => { setView('chat'); focusInput(); }); }} onNew={() => { newChat(); setView('chat'); focusInput(); }} /></>
+      ) : (
+        <>
+          <header className="chat-head">
+            <button type="button" className="chat-title" onClick={() => setView('history')} title={t('Earlier chats in this file')} data-testid="chat-history-open">
+              <RotateCcwClock />
+              <span dir="auto" data-testid="chat-title">{title || t('New chat')}</span>
+              <span className="chat-sr">{t('Earlier chats in this file')}</span>
+            </button>
+            {prompt.messages.length ? (
+              <button type="button" className="chat-pill is-quiet chat-new" onClick={() => { newChat(); focusInput(); }} disabled={prompt.running} title={t('New chat: the agent forgets what was said here')} data-testid="prompt-new-chat">
+                <Plus size={12} aria-hidden="true" /> {t('New chat')}
+              </button>
+            ) : null}
+            {calling ? (
+              // In a call here, the button that started it becomes the call's live mark, in the same place.
+              <span className="chat-call-live" data-testid="chat-call-live"><Phone size={14} fill="currentColor" strokeWidth={0} aria-hidden="true" /><span className="chat-sr">{t('In a call')}</span></span>
+            ) : <IconButton icon={<Phone size={14} />} title={t('Call your agent: talk instead of typing')} onClick={() => void startCall()} testId="chat-call" />}
+            <IconButton icon={<PanelRightClose size={14} />} title={drawer ? t('Close ({shortcut})', { shortcut: 'Esc' }) : t('Hide the chat ({shortcut})', { shortcut: 'Ctrl+Alt+3' })} onClick={() => setChatOpen(false)} testId="chat-close" />
+          </header>
+          {calling ? <CallPanel /> : null}
+          {prompt.redo ? <div className="prompt-redo" data-testid="prompt-redo"><strong>{t('Redo this screen…')} {prompt.redo.name}</strong><button type="button" className="run-link" onClick={() => { editor().set({ prompt: { ...editor().prompt, redo: undefined } }); setIntentOverride(null); setText(''); }}>{t('Cancel')}</button></div> : null}
+          <ChatLog
+            messages={prompt.messages}
+            running={prompt.running}
+            runId={prompt.runId}
+            fileId={fileId}
+            onRetry={() => { const last = lastUserMessage(prompt.messages); if (last) submit(last.text); }}
+            onEdit={editLast}
+            empty={none || prompt.redo || prompt.restoring ? null : { target: target.length ? label : null, count: target.length, race: Boolean(raceTarget && artboard), typing: Boolean(text.trim()), onStart: startWith }}
+            calling={calling ? (callSaid ? 'talking' : 'fresh') : null}
+          />
+          {showNotes ? <div className="prompt-notes"><button type="button" className="run-link" onClick={() => editor().set({ rightTab: 'comments' })} data-testid="prompt-show-notes">{t('Show the notes')}</button></div> : null}
+          <footer className="chat-composer">
+            {fileId ? <ChatBranch fileId={fileId} closed={closed} onNewChat={() => { newChat(); setClosed(undefined); focusInput(); }} /> : null}
+            {review === 'directions' && runners?.length ? <RaceLanes lanes={lanes} onChange={setLanes} runners={runners} catalogs={settings?.catalogs} /> : null}
+            {(review === 'proposal' || review === 'directions') && !prompt.redo ? <VariationControls mode={review} value={variation} onChange={setVariation} runs={lanes.length} sections={raceTarget ? snap.children(raceTarget).map((id) => snap.nodes.get(id)).filter((n) => n && !n.hidden).map((n) => n!.name) : []} /> : null}
+            <div className={`chat-box${voice.phase === 'recording' ? ' is-recording' : ''}`}>
+              {picking ? <ChatPicker items={picking} active={Math.min(pickerIndex, Math.max(0, picking.length - 1))} onPick={pick} onHover={setPickerIndex} /> : null}
+              {names.length || images.length || uploading || skill ? (
+                <div className="chat-context" data-testid="chat-context">
+                  {skill ? (
+                    <span className="chat-chip is-skill" data-testid="chat-skill-chip">
+                      <span dir="auto">{t('Skill: {name}', { name: skill.name })}</span>
+                      <button type="button" title={t('Leave the skill out')} aria-label={t('Leave the skill out')} onClick={() => setSkill(null)}><X size={10} /></button>
+                    </span>
+                  ) : null}
+                  <ContextChips names={names} />
+                  {images.map((src) => (
+                    <span key={src} className="chat-image" data-testid="chat-image">
+                      <img src={resolveAsset(src)} alt={t('Attached image')} />
+                      <span className="chat-image-actions">
+                        <button type="button" title={t('Rebuild as layers')} aria-label={t('Rebuild as layers')} onClick={() => { setImages((list) => list.filter((s) => s !== src)); const note = text.trim(); setText(''); void rebuildStoredImage(src, note, runner); }}><Layers size={10} /></button>
+                        <button type="button" title={t('Remove')} aria-label={t('Remove the image')} onClick={() => setImages((list) => list.filter((s) => s !== src))} data-testid="chat-image-remove"><X size={10} /></button>
+                      </span>
+                    </span>
+                  ))}
+                  {uploading ? <span className="chat-image is-busy" role="status" aria-label={t('Uploading')}><Loader2 size={12} className="spin" /></span> : null}
+                </div>
+              ) : null}
+              <textarea
+                ref={inputRef}
+                rows={2}
+                className="prompt-input chat-input"
+                value={text}
+                data-testid="prompt-input"
+                aria-label={placeholder}
+                placeholder={voice.phase === 'transcribing' ? t('Writing it out') : placeholder}
+                dir="auto"
+                disabled={none}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setCaret(e.target.selectionStart ?? e.target.value.length);
+                  setPickerClosed(null);
+                  if (!e.target.value.trim()) setIntentOverride(null);
+                }}
+                onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
+                onPaste={(e) => {
+                  const files = [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'));
+                  if (!files.length || none) return;
+                  e.preventDefault();
+                  void attach(files);
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  // The / and @ menu takes the arrows, Enter, Tab and Esc while it is open.
+                  if (picking && asked) {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      const n = picking.length || 1;
+                      setPickerIndex((i) => (i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
+                      return;
+                    }
+                    if ((e.key === 'Enter' || e.key === 'Tab') && !e.shiftKey && picking.length) {
+                      e.preventDefault();
+                      pick(picking[Math.min(pickerIndex, picking.length - 1)]!);
+                      return;
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setPickerClosed(asked.start);
+                      return;
+                    }
+                  }
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    submit();
+                  }
+                  // Up in an empty field takes back the last message to edit, as chats do.
+                  if (e.key === 'ArrowUp' && !text && !prompt.running) {
+                    const last = lastUserMessage(prompt.messages);
+                    if (last) { e.preventDefault(); setText(last.text); }
+                  }
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    if (drawer) {
+                      setChatOpen(false);
+                      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="prompt-toggle"]')?.focus());
+                      return;
+                    }
+                    if (prompt.redo) editor().set({ prompt: { ...prompt, redo: undefined } });
+                    else (document.querySelector<HTMLElement>('main.stage') ?? document.body).focus?.();
+                    inputRef.current?.blur();
+                  }
+                }}
+              />
+              {voice.phase === 'recording' ? <VoiceRecording voice={voice} testId="chat-mic" /> : (
+                <div className="chat-controls">
+                  <IconButton icon={<Paperclip size={14} />} title={t('Attach an image, or paste or drop one here')} onClick={() => pickImages((files) => void attach(files))} disabled={none} testId="chat-attach" />
+                  <ModePicker value={review} onChange={setReview} lanes={lanes.length} disabled={Boolean(prompt.redo)} />
+                  {runners?.length && review !== 'directions' ? (
+                    <AgentPicker runner={runner} options={runnerOptions} onRunner={setRunner} choice={runner && !deviceId ? runner : null} summary={agentSummary} {...(deviceId ? { note: t('That device runs it with its own model and effort.') } : {})} />
+                  ) : null}
+                  <span className="chat-controls-end">
+                  {prompt.running ? null : <LanguageChoice
+                    value={language}
+                    onChange={setLanguage}
+                    canAdd={review === 'direct' && !prompt.redo}
+                    brand={brandVoice}
+                    selection={target.length > 0}
+                    onInstruction={(line) => {
+                      setText((current) => (current.trim() ? `${current.trimEnd()} ${line}` : line));
+                      inputRef.current?.focus();
+                    }}
+                  />}
+                  {prompt.running ? null : <MicButton voice={voice} testId="chat-mic" />}
+                  {prompt.running ? (
+                    <button type="button" className="chat-stop prompt-stop" onClick={() => stopPrompt()} data-testid="prompt-stop" title={t('Stop')}>
+                      <Square size={9} fill="currentColor" aria-hidden="true" />
+                      <span className="chat-stop-time" aria-hidden="true"><Elapsed since={prompt.startedAt} /></span>
+                      {t('Stop')}
+                    </button>
+                  ) : (
+                    <IconButton className="prompt-send" icon={<ArrowUp size={14} />} title={review === 'directions' ? t.n(lanes.length, 'Start {count} run', 'Start {count} runs') : t('Send ({shortcut})', { shortcut: 'Enter' })} disabled={!canSend} onClick={() => submit()} testId="prompt-send" />
+                  )}
+                  </span>
+                </div>
+              )}
+            </div>
+            <VoiceNotice voice={voice} testId="chat" />
+            {languageLine ? (
+              <div className="prompt-language-note" role="status" data-testid="prompt-language-note" data-mode={languageMode}>
+                <span>{languageLine}</span>
+                <button type="button" className="run-link" onClick={() => setLanguage({})} data-testid="prompt-language-reset">{t('Reset')}</button>
+              </div>
+            ) : null}
+            {intentNote ? (
+              <div className="prompt-intent" role="status" data-testid="prompt-intent" data-intent={intent}>
+                <span>{intentNote.say}</span>
+                {!prompt.redo ? <button type="button" className="run-link" onClick={() => setIntentOverride(intentNote.to)} data-testid="prompt-intent-switch">{intentNote.other}</button> : null}
+              </div>
+            ) : null}
+            <p className="prompt-target chat-target" data-testid="prompt-target">{modeLine}{cost}</p>
+          </footer>
+        </>
+      )}
+      {dragging ? <div className="chat-drop" aria-hidden="true"><Images size={16} /> {t('Drop an image to send it with the message')}</div> : null}
+      {skillSheet && fileId ? <SkillSheet fileId={fileId} nodeId={skillSheet.nodeId} name={skillSheet.name} {...(skill ? { initial: skill.id } : {})} onClose={() => { setSkillSheet(null); void loadSkills(true).then(setSkills); focusInput(); }} /> : null}
+    </section>
+  );
+}
+
+function RotateCcwClock() {
+  // Lucide's history icon (rotate-ccw-clock), by its own name.
+  return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>;
+}
+
+function pickImages(onPicked: (files: File[]) => void): void {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = () => onPicked([...(input.files ?? [])]);
+  input.click();
+}
+
+function Elapsed({ since }: { since: number | undefined }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return <>{since ? elapsed(now - since) : ''}</>;
+}
+
+/** The layers that go with the message, each one taken out with its cross. */
+function ContextChips({ names }: { names: { id: string; name: string }[] }) {
+  const t = useT();
+  const { shown, more } = contextChips(names);
+  const drop = (ids: string[]) => {
+    const st = editor();
+    st.set({ prompt: { ...st.prompt, nodeIds: st.prompt.nodeIds.filter((id) => !ids.includes(id)) } });
+  };
+  return (
+    <>
+      {shown.map((n) => (
+        <span key={n.id} className="chat-chip" data-testid="chat-chip">
+          <Layers size={11} aria-hidden="true" />
+          <span dir="auto">{n.name}</span>
+          <button type="button" title={t('Leave {name} out of the message', { name: n.name })} aria-label={t('Leave {name} out of the message', { name: n.name })} onClick={() => drop([n.id])} data-testid="chat-chip-remove"><X size={10} /></button>
+        </span>
+      ))}
+      {more ? (
+        <span className="chat-chip is-more">
+          {t.n(more, 'and {count} more', 'and {count} more')}
+          <button type="button" title={t('Leave them out of the message')} aria-label={t('Leave them out of the message')} onClick={() => drop(names.slice(3).map((n) => n.id))}><X size={10} /></button>
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- the conversation
+
+interface FirstAsks { target: string | null; count: number; race: boolean; /** Something is written: the first asks step aside. */ typing: boolean; onStart: (words: string, mode: Review) => void }
+
+function ChatLog({ messages, running, runId, fileId, onRetry, onEdit, empty, calling = null }: { messages: PromptMessage[]; running: boolean; runId: string | null; fileId: string | null; onRetry: () => void; onEdit: () => void; empty: FirstAsks | null; calling?: 'fresh' | 'talking' | null }) {
+  const t = useT();
+  const listRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const stick = useRef(true);
+  const [behind, setBehind] = useState(false);
+  const turns = chatTurns(messages);
+  const hasMessages = messages.length > 0;
+
+  // New words keep the list at its end, unless the person scrolled up to read; then it stays and says there is more.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    if (stick.current) el.scrollTop = el.scrollHeight;
+    else setBehind(true);
+  }, [messages]);
+  // What arrives later under a reply (the layers it changed, a picture of them) keeps the end in view too.
+  useEffect(() => {
+    const el = listRef.current;
+    const inner = innerRef.current;
+    if (!el || !inner || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight; });
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, [hasMessages]);
+  // A chat opened again starts at its end.
+  useEffect(() => { stick.current = true; }, [fileId]);
+
+  // During a call the call has the panel: no first suggestions, one quiet line about where the words go.
+  if (!messages.length && calling) return <div className="chat-empty is-call" data-testid="chat-empty">{calling === 'fresh' ? <p>{t('What you say in the call shows here, with the agent’s answers and steps.')}</p> : null}</div>;
+  if (!messages.length) return <ChatEmpty asks={empty} />;
+  return (
+    <div className="chat-log-wrap">
+      <div
+        ref={listRef}
+        className="chat-log prompt-messages"
+        data-testid="prompt-messages"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-busy={running}
+        tabIndex={0}
+        onScroll={(e) => {
+          stick.current = atBottom(e.currentTarget);
+          if (stick.current) setBehind(false);
+        }}
+      >
+        <div ref={innerRef} className="chat-log-inner">
+          {turns.map((turn, i) => <Turn key={turn.index >= 0 ? turn.index : `a${i}`} turn={turn} last={i === turns.length - 1} running={running && i === turns.length - 1} liveRunId={runId} fileId={fileId} onRetry={onRetry} onEdit={onEdit} />)}
+        </div>
+      </div>
+      {behind ? (
+        <button type="button" className="chat-jump" onClick={() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; stick.current = true; setBehind(false); }} data-testid="chat-jump">
+          <ArrowDown size={12} /> {t('Jump to the latest')}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Nothing said yet: a few first asks for what is selected, or for the page, each with the mode it suits. */
+function ChatEmpty({ asks }: { asks: FirstAsks | null }) {
+  const t = useT();
+  const one = asks?.target && asks.count === 1 ? asks.target : null;
+  const heading = one ? t('Ask for a change in {name}', { name: one })
+    : asks?.count ? t.n(asks.count, 'Ask for a change in this layer', 'Ask for a change in these {count} layers')
+    : t('Ask for a change on this page');
+  const name = one ?? t('the selection');
+  const list: { words: string; mode: Review }[] = !asks || asks.typing ? [] : asks.count ? [
+    { words: t('What would you change in {name}?', { name }), mode: 'critique' },
+    { words: t('Make {name} calmer: less text, one clear action', { name }), mode: 'direct' },
+    { words: t('Give {name} its hover, focus and disabled states', { name }), mode: 'proposal' },
+    ...(asks.race ? [{ words: t('Try three different layouts for {name}', { name }), mode: 'directions' as const }] : []),
+  ] : [
+    { words: t('What should I fix first on this page?'), mode: 'critique' },
+    { words: t('Tighten the spacing and alignment to the grid'), mode: 'direct' },
+    { words: t('Make the hierarchy clearer: one loud thing per screen'), mode: 'direct' },
+    { words: t('Add the missing empty, loading and error states'), mode: 'proposal' },
+  ];
+  return (
+    <div className="chat-empty" data-testid="chat-empty">
+      <div className="chat-empty-head">
+        <h2>{heading}</h2>
+        <p>{t('It works on what you select, or on the whole page, and remembers this chat.')}</p>
+      </div>
+      {list.length ? (
+        <ul className="chat-starters" aria-label={t('First asks')}>
+          {list.map((ask) => (
+            <li key={ask.words}>
+              <button type="button" className="chat-starter" onClick={() => asks!.onStart(ask.words, ask.mode)} title={t('Put it in the field to edit or send')} data-testid="chat-starter" data-mode={ask.mode}>
+                <span className="chat-starter-words" dir="auto">{ask.words}</span>
+                <span className="chat-starter-mode"><ModeIcon mode={ask.mode} />{modeWords(ask.mode, 3).label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="chat-keys">{t('Type / for a playbook, @ for a layer, component or token.')}</p>
+    </div>
+  );
+}
+
+function Turn({ turn, last, running, liveRunId, fileId, onRetry, onEdit }: { turn: ChatTurn; last: boolean; running: boolean; liveRunId: string | null; fileId: string | null; onRetry: () => void; onEdit: () => void }) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+  // A voice call's reply ends with a <say> block for the voice: its words stay, the tags do not.
+  const words = stripSayTags(replyText(turn));
+  const steps = stepLines(turn.steps.map((tool) => ({ tool })), running ? 6 : 40);
+  const done = !running;
+  // What a run changed goes under its words, once it is over.
+  const result = done && turn.runId && fileId && liveRunId !== turn.runId;
+  const copy = () => {
+    void navigator.clipboard?.writeText(words).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }, () => editor().showToast(t('Could not copy.')));
+  };
+  return (
+    <div className="chat-turn" data-testid="chat-turn">
+      {turn.user ? (
+        <div className="chat-you" data-testid="chat-you">
+          {turn.user.context?.length || turn.user.images?.length ? (
+            <div className="chat-you-context">
+              {turn.user.context?.slice(0, 3).map((name, i) => <span key={i} className="chat-chip is-static"><Layers size={11} aria-hidden="true" /><span dir="auto">{name}</span></span>)}
+              {(turn.user.context?.length ?? 0) > 3 ? <span className="chat-chip is-static">{t.n((turn.user.context?.length ?? 0) - 3, 'and {count} more', 'and {count} more')}</span> : null}
+              {turn.user.images?.map((src) => <img key={src} className="chat-you-image" src={resolveAsset(src)} alt={t('Attached image')} />)}
+            </div>
+          ) : null}
+          <p className="prompt-msg is-user chat-bubble" dir="auto">{turn.user.text}</p>
+        </div>
+      ) : null}
+      {turn.replies.length || turn.steps.length || turn.error || running || turn.notes.length ? (
+        <div className="chat-agent" data-testid="chat-agent">
+          <div className="chat-who">
+            <span className="chat-who-mark" aria-hidden="true"><Sparkles size={10} /></span>
+            <span className="chat-who-name">{whoWords(turn.user?.runner)}</span>
+            {turn.user?.review && turn.user.review !== 'direct' ? <span>{reviewWords(turn.user.review)}</span> : null}
+            {turn.user?.sized?.label ? <span className="chat-who-model" title={t('Picked by the size of the request, because no model is chosen')} data-testid="chat-sized">{sizedWords(turn.user.sized.size, turn.user.sized.label)}</span> : null}
+            {turn.user?.at ? <span className="chat-who-at">{shortAgo(turn.user.at)}</span> : null}
+          </div>
+          {words ? <Markdown text={words} className="md prompt-msg is-agent" /> : null}
+          {running ? (
+            <ol className="chat-steps" aria-live="polite" data-testid="chat-steps">
+              {steps.map((s, i) => (
+                <li key={i} className={i === steps.length - 1 ? 'is-current' : ''}>
+                  {i === steps.length - 1 ? <Loader2 size={12} className="spin" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />}
+                  <span>{s.text}{s.count > 1 ? ` (${s.count})` : ''}</span>
+                </li>
+              ))}
+              {!steps.length ? <li className="is-current"><Loader2 size={12} className="spin" aria-hidden="true" /><span>{t('Working')}</span></li> : null}
+            </ol>
+          ) : steps.length ? (
+            <div className="chat-steps-done">
+              <button type="button" className="chat-steps-toggle" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="chat-steps-toggle">
+                {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />} {t.n(turn.steps.length, '{count} step', '{count} steps')}
+              </button>
+              {open ? <ol className="chat-steps is-done">{steps.map((s, i) => <li key={i}><Check size={12} aria-hidden="true" /><span>{s.text}{s.count > 1 ? ` (${s.count})` : ''}</span></li>)}</ol> : null}
+            </div>
+          ) : null}
+          {turn.notes.map((n, i) => <p key={i} className="chat-note" data-testid="chat-note">{n.text}</p>)}
+          {turn.error ? (
+            <div className="chat-error prompt-msg is-error" role="alert" data-testid="chat-error">
+              <p><CircleAlert size={13} aria-hidden="true" /> <span dir="auto">{turn.error.text}</span></p>
+              {last && turn.user ? (
+                <div className="chat-error-actions">
+                  <button type="button" className="chat-pill" onClick={onRetry} data-testid="chat-retry"><RotateCcw size={12} /> {t('Try again')}</button>
+                  <button type="button" className="run-link" onClick={onEdit}>{t('Edit the message')}</button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {result ? <RunResult fileId={fileId!} runId={turn.runId!} /> : null}
+          {done && (words || last) && !turn.error ? (
+            <div className="chat-actions">
+              {words ? <button type="button" className="chat-act" title={t('Copy the answer')} onClick={copy} data-testid="chat-copy">{copied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}{copied ? t('Copied') : t('Copy')}</button> : null}
+              {last && turn.user ? <button type="button" className="chat-act" title={t('Send the same message again')} onClick={onRetry} data-testid="chat-ask-again"><RotateCcw size={12} aria-hidden="true" />{t('Ask again')}</button> : null}
+              {last && turn.user ? <button type="button" className="chat-act" title={t('Edit your message')} onClick={onEdit} data-testid="chat-edit"><Pencil size={12} aria-hidden="true" />{t('Edit')}</button> : null}
+              {turn.runId ? <TraceLink runId={turn.runId} /> : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- earlier chats
+
+function ChatHistory({ fileId, running, onBack, onPick, onNew }: { fileId: string | null; running: boolean; onBack: () => void; onPick: (id: string) => void; onNew: () => void }) {
+  const t = useT();
+  const [list, setList] = useState<ConversationSummary[] | null>(null);
+  const current = fileId ? conversationFor(fileId) : '';
+  useEffect(() => {
+    if (!fileId) return;
+    let live = true;
+    const load = () => void api.conversations(fileId).then((l) => { if (live) setList(l); }, () => { if (live) setList([]); });
+    load();
+    const off = onServerEvent((e) => { if (e.t === 'run-history' && e.fileId === fileId) load(); });
+    return () => {
+      live = false;
+      off();
+    };
+  }, [fileId]);
+  const back = useRef<HTMLButtonElement>(null);
+  useEffect(() => { back.current?.focus(); }, []);
+  return (
+    <div className="chat-history" data-testid="chat-history" onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onBack(); } }}>
+      <header className="chat-head">
+        <button ref={back} type="button" className="icon-btn" title={t('Back to the chat')} aria-label={t('Back to the chat')} onClick={onBack} data-testid="chat-history-back"><ChevronLeft size={14} /></button>
+        <h2 className="chat-head-title">{t('Chats in this file')}</h2>
+        <button type="button" className="chat-pill is-quiet" onClick={onNew} disabled={running} data-testid="chat-history-new"><Plus size={13} /> {t('New chat')}</button>
+      </header>
+      {list === null ? <p className="chat-history-note">{t('Loading')}</p> : !list.length ? <p className="chat-history-note">{t('No chats in this file yet.')}</p> : (
+        <ul className="chat-history-list" aria-label={t('Chats in this file')}>
+          {list.map((c) => (
+            <li key={c.id}>
+              <button type="button" className={`chat-history-row${c.id === current ? ' is-current' : ''}`} aria-current={c.id === current ? 'true' : undefined} disabled={running && c.id !== current} onClick={() => (c.id === current ? onBack() : onPick(c.id))} data-testid="chat-history-row">
+                <span className="chat-history-top">
+                  <span className="chat-history-title" dir="auto">{c.title || t('New chat')}</span>
+                  {c.id === current ? <span className="chat-history-open">{t('Current')}</span> : null}
+                </span>
+                <span className="chat-history-meta">{[c.runners.map(runnerName).join(', '), t.n(c.turns, '{count} message', '{count} messages'), shortAgo(c.updatedAt)].filter(Boolean).join(' · ')}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="chat-history-note">{running ? t('A run is going. Its chat stays open until it is done.') : t('Each chat starts the agent fresh with what was said in it. This file keeps its last 40.')}</p>
+    </div>
+  );
+}
