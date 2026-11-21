@@ -20,7 +20,7 @@
     "@paper-design/shaders-react": "0.0.82",
     "culori": "4.0.2",
     "lucide-react": "1.74.0",
-    "paper": "^0.16.0",
+    "paper": "^0.17.0",
     "react": "^19",
     "react-dom": "^19",
     "y-protocols": "^1",
