@@ -24,7 +24,7 @@
     "@types/node": "^22",
     "@vue/compiler-sfc": "^3.5.45",
     "svelte": "^5.57.3",
-    "typescript": "^5.9",
+    "typescript": "^7.0",
     "vitest": "^5.1.1"
   },
   "overrides": {
