@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: sin conexión, el archivo se sincroniza cuando vuelva",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} píxeles, como esta Mac la renderiza ahora (píxeles de respaldo; una resolución escalada lo cambia)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} píxeles, resolución nativa",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} píxeles, tamaño indicado"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} píxeles, tamaño indicado",
+ "Finish": "Acabado",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Poner en un dispositivo: la mesa de trabajo elegida en vivo en un teléfono, tableta o ventana del navegador",
+ "Show or hide the device frame around the selected artboard": "Mostrar u ocultar el marco de dispositivo alrededor de la mesa de trabajo elegida",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Se muestra alrededor de la mesa de trabajo en el lienzo. No cambia la mesa de trabajo ni su exportación.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Muestra {name} en un dispositivo. Cambia el diseño y la pantalla lo sigue."
 }

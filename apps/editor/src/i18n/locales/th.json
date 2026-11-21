@@ -4448,5 +4448,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: ออฟไลน์ ไฟล์จะซิงค์เมื่ออุปกรณ์กลับมาออนไลน์",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} พิกเซล ตามที่ Mac เครื่องนี้เรนเดอร์อยู่ตอนนี้ (พิกเซลจริง ความละเอียดแบบปรับขนาดจะเปลี่ยนค่านี้)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} พิกเซล ความละเอียดดั้งเดิม",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} พิกเซล ขนาดตามที่ระบุ"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} พิกเซล ขนาดตามที่ระบุ",
+ "Finish": "สีตัวเครื่อง",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "ใส่ในอุปกรณ์: อาร์ตบอร์ดที่เลือกแบบสดในโทรศัพท์ แท็บเล็ต หรือหน้าต่างเบราว์เซอร์",
+ "Show or hide the device frame around the selected artboard": "แสดงหรือซ่อนกรอบอุปกรณ์รอบอาร์ตบอร์ดที่เลือก",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "แสดงรอบอาร์ตบอร์ดบนแคนวาส ไม่เปลี่ยนอาร์ตบอร์ดหรือการส่งออก",
+ "Shows {name} in a device. Change the design and the screen follows.": "แสดง {name} ในอุปกรณ์ เปลี่ยนดีไซน์แล้วหน้าจอจะตามไปด้วย"
 }

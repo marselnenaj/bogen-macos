@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: offline, soubor se synchronizuje, až bude zpět",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pixelů, jak ho tento Mac nyní vykresluje (skutečné pixely; škálované rozlišení je mění)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pixelů, nativní rozlišení",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixelů, zadaná velikost"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixelů, zadaná velikost",
+ "Finish": "Povrch",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Vložit do zařízení: vybraná kreslicí plocha živě v telefonu, tabletu nebo okně prohlížeče",
+ "Show or hide the device frame around the selected artboard": "Zobrazit nebo skrýt rámeček zařízení kolem vybrané kreslicí plochy",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Zobrazuje se kolem kreslicí plochy na plátně. Nemění kreslicí plochu ani její export.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Zobrazuje {name} v zařízení. Změňte návrh a obrazovka ho následuje."
 }

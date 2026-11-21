@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: не в сети, файл синхронизируется, когда устройство вернется",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} пикселей, как этот Mac отображает его сейчас (фактические пиксели; масштабированное разрешение их меняет)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} пикселей, исходное разрешение",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пикселей, размер как задано"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пикселей, размер как задано",
+ "Finish": "Отделка",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Поместить в устройство: выбранный артборд вживую в телефоне, планшете или окне браузера",
+ "Show or hide the device frame around the selected artboard": "Показать или скрыть рамку устройства вокруг выбранного артборда",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Показывается вокруг артборда на холсте. Не меняет артборд и его экспорт.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Показывает {name} в устройстве. Измените дизайн, и экран последует за ним."
 }

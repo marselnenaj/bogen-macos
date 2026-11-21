@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: ótengt, skráin samstillist þegar það kemur aftur",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} dílar, eins og þessi Mac teiknar hann núna (raunverulegir dílar; kvörðuð upplausn breytir því)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} dílar, upprunaleg upplausn",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} dílar, stærð eins og hún var gefin"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} dílar, stærð eins og hún var gefin",
+ "Finish": "Áferð",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Setja í tæki: valinn teikniflötur í beinni í síma, spjaldtölvu eða vafraglugga",
+ "Show or hide the device frame around the selected artboard": "Sýna eða fela tækjaramma um valinn teikniflöt",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Birtist um teikniflötinn á striganum. Breytir hvorki teikifletinum né útflutningi hans.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Sýnir {name} í tæki. Breyttu hönnuninni og skjárinn fylgir."
 }

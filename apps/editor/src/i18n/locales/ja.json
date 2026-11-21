@@ -4448,5 +4448,10 @@
  "{device}: offline, the file syncs when it is back": "{device}：オフライン、オンラインに戻るとファイルが同期されます",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}：{width} × {height} ピクセル、この Mac の現在の描画サイズ（バッキングピクセル。スケーリング解像度を選ぶと変わります）",
  "{display}: {width} × {height} pixels, native resolution": "{display}：{width} × {height} ピクセル、ネイティブ解像度",
- "{display}: {width} × {height} pixels, size as given": "{display}：{width} × {height} ピクセル、指定どおりのサイズ"
+ "{display}: {width} × {height} pixels, size as given": "{display}：{width} × {height} ピクセル、指定どおりのサイズ",
+ "Finish": "仕上げ",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "デバイスに入れる: 選択したアートボードをスマートフォン、タブレット、ブラウザウィンドウにライブ表示",
+ "Show or hide the device frame around the selected artboard": "選択したアートボードのデバイスフレームを表示または非表示",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "キャンバス上でアートボードの周りに表示されます。アートボードやその書き出しは変わりません。",
+ "Shows {name} in a device. Change the design and the screen follows.": "{name} をデバイスに表示します。デザインを変えると画面も追従します。"
 }

@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: offline, fișierul se sincronizează când revine",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pixeli, cum îl randează acum acest Mac (pixeli de randare; o rezoluție scalată îi schimbă)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pixeli, rezoluție nativă",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixeli, dimensiune specificată"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixeli, dimensiune specificată",
+ "Finish": "Finisaj",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Pune într-un dispozitiv: planșeta aleasă în direct într-un telefon, o tabletă sau o fereastră de browser",
+ "Show or hide the device frame around the selected artboard": "Arată sau ascunde rama de dispozitiv în jurul planșetei alese",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Apare în jurul planșetei pe pânză. Nu schimbă planșeta și nici exportul ei.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Arată {name} într-un dispozitiv. Schimbă designul și ecranul îl urmează."
 }

@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: nje ya mtandao, faili itasawazishwa kitakaporudi",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: pikseli {width} × {height}, kama Mac hii inavyoichora sasa (pikseli halisi; ubora uliopimwa huibadilisha)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: pikseli {width} × {height}, ubora asili",
- "{display}: {width} × {height} pixels, size as given": "{display}: pikseli {width} × {height}, ukubwa kama ulivyotolewa"
+ "{display}: {width} × {height} pixels, size as given": "{display}: pikseli {width} × {height}, ukubwa kama ulivyotolewa",
+ "Finish": "Umaliziaji",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Weka kwenye kifaa: ubao wa sanaa uliochaguliwa moja kwa moja kwenye simu, kompyuta kibao au dirisha la kivinjari",
+ "Show or hide the device frame around the selected artboard": "Onyesha au ficha fremu ya kifaa kuzunguka ubao wa sanaa uliochaguliwa",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Inaonyeshwa kuzunguka ubao wa sanaa kwenye turubai. Haibadilishi ubao wa sanaa wala uhamishaji wake.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Inaonyesha {name} kwenye kifaa. Badilisha muundo na skrini itafuata."
 }

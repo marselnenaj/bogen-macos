@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: neprisijungęs, failas bus sinchronizuotas, kai įrenginys grįš",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pikselių, kaip šis Mac kompiuteris jį dabar atvaizduoja (faktiniai pikseliai; pakeisto mastelio raiška tai keičia)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pikselių, savoji raiška",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikselių, nurodytas dydis"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikselių, nurodytas dydis",
+ "Finish": "Apdaila",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Įdėti į įrenginį: pasirinkta piešimo lenta gyvai telefone, planšetėje ar naršyklės lange",
+ "Show or hide the device frame around the selected artboard": "Rodyti arba slėpti įrenginio rėmelį aplink pasirinktą piešimo lentą",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Rodomas aplink piešimo lentą drobėje. Nekeičia piešimo lentos ir jos eksporto.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Rodo {name} įrenginyje. Pakeiskite dizainą ir ekranas seks."
 }

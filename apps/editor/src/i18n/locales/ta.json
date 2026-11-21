@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: இணைப்பில்லை, அது திரும்பும்போது கோப்பு ஒத்திசையும்",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} படப்புள்ளிகள், இந்த Mac இப்போது வரையும் அளவில் (பின்னணிப் படப்புள்ளிகள்; அளவிடப்பட்ட தெளிவுத்திறன் இதை மாற்றும்)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} படப்புள்ளிகள், இயல்புத் தெளிவுத்திறன்",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} படப்புள்ளிகள், கொடுக்கப்பட்ட அளவு"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} படப்புள்ளிகள், கொடுக்கப்பட்ட அளவு",
+ "Finish": "பூச்சு",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "சாதனத்தில் வை: தேர்ந்த வரைபலகை நேரலையாக தொலைபேசி, டேப்லெட் அல்லது உலாவி சாளரத்தில்",
+ "Show or hide the device frame around the selected artboard": "தேர்ந்த வரைபலகையைச் சுற்றி சாதனச் சட்டகத்தைக் காட்டு அல்லது மறை",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "கேன்வாஸில் வரைபலகையைச் சுற்றிக் காட்டப்படும். இது வரைபலகையையோ அதன் ஏற்றுமதியையோ மாற்றாது.",
+ "Shows {name} in a device. Change the design and the screen follows.": "{name} ஐ ஒரு சாதனத்தில் காட்டுகிறது. வடிவமைப்பை மாற்றினால் திரையும் தொடரும்."
 }

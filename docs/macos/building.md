@@ -25,15 +25,15 @@ The macOS-only scripts stop at once on another OS with a message; they never hal
 
 ## Versions and pins
 
-- `apps/macos/package.json` pins exact versions of Electron (45.2.3), `@electron/packager`, `@electron/osx-sign`,
+- `apps/macos/package.json` pins exact versions of Electron (45.4.1), `@electron/packager`, `@electron/osx-sign`,
   `@electron/notarize`, `@electron/fuses`, esbuild and TypeScript; `apps/macos/package-lock.json` locks the rest.
   The app is its own npm project, outside the root workspaces, so the Omarchy build and its lockfile are unchanged.
-- `apps/macos/runtime.json` pins the bundled Node.js (26.13.0) and Chrome for Testing headless shell
-  (156.0.8078.80), their download URLs and SHA-256 hashes, the bundle id, the minimum macOS (13.0) and the browser
-  floor (156.0.8078.79). Electron 45.2.3 ships Chromium 156.0.8078.80.
+- `apps/macos/runtime.json` pins the bundled Node.js (26.13.1) and Chrome for Testing headless shell
+  (158.0.8127.36), their download URLs and SHA-256 hashes, the bundle id, the minimum macOS (13.0) and the browser
+  floor (156.0.8078.79). Electron 45.4.1 ships Chromium 156.0.8078.100.
 - `fetch-runtime.mjs` checks Node against nodejs.org's `SHASUMS256.txt`, and both downloads against the pinned
   hashes. All four hashes (Node and headless shell, arm64 and x64) are pinned: Node's as listed in nodejs.org's
-  `SHASUMS256.txt` for v26.13.0; the headless shell's (156.0.8078.80, revision 1706539, as listed in Chrome for
+  `SHASUMS256.txt` for v26.13.1; the headless shell's (158.0.8127.36, revision 1727472, as listed in Chrome for
   Testing's `known-good-versions-with-downloads.json`) observed from the complete official archives over HTTPS. Chrome
   for Testing publishes no checksum file, so that hash is a pinned observation, not a Google-published checksum.
   CI and releases fetch with `--frozen`, which refuses any unpinned or different file. A hash not pinned yet (after a
@@ -68,7 +68,7 @@ Bogen.app/Contents/
   Resources/app.asar                  main.cjs, preload.cjs, the app's own pages (integrity-checked)
   Resources/server/dist/              cli.js, shader-runtime.js, vectorize-worker.js, editor/
   Resources/server/node_modules/      puppeteer-core, esbuild (+ the target CPU's binary), tailwindcss and theirs
-  Resources/runtime/node/bin/node     Node.js 26.13.0
+  Resources/runtime/node/bin/node     Node.js 26.13.1
   Resources/runtime/headless-shell/   Chromium 156 for exports and screenshots: chrome-headless-shell and every file
                                       of its archive (ABOUT, LICENSE.headless_shell, paks, ICU data, libraries)
   Resources/bin/bogen                 the command line launcher

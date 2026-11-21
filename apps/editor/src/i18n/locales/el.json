@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: εκτός σύνδεσης, το αρχείο θα συγχρονιστεί όταν επανέλθει",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pixel, όπως το αποδίδει τώρα αυτός ο Mac (πραγματικά pixel· μια κλιμακωμένη ανάλυση το αλλάζει)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pixel, εγγενής ανάλυση",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixel, μέγεθος όπως δόθηκε"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pixel, μέγεθος όπως δόθηκε",
+ "Finish": "Φινίρισμα",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Τοποθέτηση σε συσκευή: ο επιλεγμένος πίνακας σχεδίασης ζωντανά σε τηλέφωνο, tablet ή παράθυρο προγράμματος περιήγησης",
+ "Show or hide the device frame around the selected artboard": "Εμφάνιση ή απόκρυψη του πλαισίου συσκευής γύρω από τον επιλεγμένο πίνακα σχεδίασης",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Εμφανίζεται γύρω από τον πίνακα σχεδίασης στον καμβά. Δεν αλλάζει τον πίνακα σχεδίασης ούτε την εξαγωγή του.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Δείχνει το {name} σε συσκευή. Αλλάξτε το σχέδιο και η οθόνη ακολουθεί."
 }

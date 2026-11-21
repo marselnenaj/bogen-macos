@@ -4448,5 +4448,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: luar talian, fail disegerakkan apabila peranti kembali",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} piksel, seperti yang dipaparkan oleh Mac ini sekarang (piksel sandaran; resolusi berskala mengubahnya)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} piksel, resolusi asal",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} piksel, saiz seperti yang diberikan"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} piksel, saiz seperti yang diberikan",
+ "Finish": "Kemasan",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Letak dalam peranti: papan seni dipilih secara langsung dalam telefon, tablet atau tetingkap pelayar",
+ "Show or hide the device frame around the selected artboard": "Tunjukkan atau sembunyikan bingkai peranti di sekeliling papan seni dipilih",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Ditunjukkan di sekeliling papan seni pada kanvas. Ia tidak mengubah papan seni atau eksportnya.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Menunjukkan {name} dalam peranti. Ubah reka bentuk dan skrin akan mengikut."
 }

@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: oflayn, fayl qurilma qaytganda sinxronlanadi",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} piksel, bu Mac uni hozir qanday chizayotgan boʻlsa (haqiqiy piksellar; masshtablangan ruxsat buni oʻzgartiradi)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} piksel, asl ruxsat",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} piksel, berilgan oʻlcham"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} piksel, berilgan oʻlcham",
+ "Finish": "Qoplama",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Qurilmaga joylash: tanlangan artbord jonli ravishda telefon, planshet yoki brauzer oynasida",
+ "Show or hide the device frame around the selected artboard": "Tanlangan artbord atrofidagi qurilma ramkasini ko‘rsatish yoki yashirish",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Tuvalda artbord atrofida ko‘rsatiladi. Artbordni ham, uning eksportini ham o‘zgartirmaydi.",
+ "Shows {name} in a device. Change the design and the screen follows.": "{name} ni qurilmada ko‘rsatadi. Dizaynni o‘zgartiring, ekran ham ergashadi."
 }

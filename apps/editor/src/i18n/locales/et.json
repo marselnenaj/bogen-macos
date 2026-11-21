@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: võrguühenduseta, fail sünkroonitakse, kui seade on tagasi",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pikslit, nagu see Mac seda praegu renderdab (tegelikud pikslid; skaleeritud resolutsioon muudab seda)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pikslit, algresolutsioon",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikslit, antud suurus"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikslit, antud suurus",
+ "Finish": "Viimistlus",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Pane seadmesse: valitud joonistusala otse telefonis, tahvelarvutis või brauseriaknas",
+ "Show or hide the device frame around the selected artboard": "Näita või peida seadme raam valitud joonistusala ümber",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Kuvatakse lõuendil joonistusala ümber. See ei muuda joonistusala ega selle eksporti.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Näitab {name} seadmes. Muuda kujundust ja ekraan järgib."
 }

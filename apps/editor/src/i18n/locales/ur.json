@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: آف لائن، فائل اس کے واپس آنے پر سنک ہو جائے گی",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} پکسلز، جیسا کہ یہ Mac اسے ابھی رینڈر کرتا ہے (حقیقی رینڈر شدہ پکسلز؛ اسکیلڈ ریزولوشن اسے بدل دیتی ہے)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} پکسلز، اصل ریزولوشن",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} پکسلز، دیا گیا سائز"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} پکسلز، دیا گیا سائز",
+ "Finish": "فنش",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "ڈیوائس میں رکھیں: منتخب آرٹ بورڈ براہِ راست فون، ٹیبلٹ یا براؤزر ونڈو میں",
+ "Show or hide the device frame around the selected artboard": "منتخب آرٹ بورڈ کے گرد ڈیوائس فریم دکھائیں یا چھپائیں",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "کینوس پر آرٹ بورڈ کے گرد دکھایا جاتا ہے۔ یہ آرٹ بورڈ یا اس کی ایکسپورٹ نہیں بدلتا۔",
+ "Shows {name} in a device. Change the design and the screen follows.": "{name} کو ڈیوائس میں دکھاتا ہے۔ ڈیزائن بدلیں اور اسکرین ساتھ بدلے گی۔"
 }

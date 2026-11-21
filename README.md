@@ -4,7 +4,7 @@
 
 # Bogen for macOS
 
-<a href="https://github.com/marselnenaj/bogen/releases/latest"><img src="https://img.shields.io/badge/version-0.4.3-2b3df2" alt="Version 0.4.3"></a>
+<a href="https://github.com/marselnenaj/bogen/releases/latest"><img src="https://img.shields.io/badge/version-0.4.4-2b3df2" alt="Version 0.4.4"></a>
 
 Design websites, app interfaces, brands and Mac themes with your own coding agent. Bogen gives Claude Code, Codex and OpenCode an editable canvas made of real HTML and CSS: the layout you see, the agent's screenshots and the exported design use the same rendering engine.
 

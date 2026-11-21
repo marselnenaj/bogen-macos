@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: fora de línia, el fitxer se sincronitzarà quan torni",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} píxels, tal com aquest Mac la representa ara (píxels de suport; una resolució escalada ho canvia)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} píxels, resolució nativa",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} píxels, mida indicada"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} píxels, mida indicada",
+ "Finish": "Acabat",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Posa en un dispositiu: la taula de treball triada en directe en un telèfon, una tauleta o una finestra del navegador",
+ "Show or hide the device frame around the selected artboard": "Mostra o amaga el marc del dispositiu al voltant de la taula de treball triada",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Es mostra al voltant de la taula de treball al llenç. No canvia la taula de treball ni la seva exportació.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Mostra {name} en un dispositiu. Canvia el disseny i la pantalla el segueix."
 }

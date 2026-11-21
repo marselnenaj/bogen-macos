@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: offline-tilassa, tiedosto synkronoidaan, kun laite palaa",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pikseliä, kuten tämä Mac sen nyt piirtää (todelliset pikselit; skaalattu tarkkuus muuttaa sitä)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pikseliä, natiivitarkkuus",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikseliä, annettu koko"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikseliä, annettu koko",
+ "Finish": "Viimeistely",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Laita laitteeseen: valittu piirtoalue elävänä puhelimessa, tabletissa tai selainikkunassa",
+ "Show or hide the device frame around the selected artboard": "Näytä tai piilota laitekehys valitun piirtoalueen ympäriltä",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Näkyy piirtoalueen ympärillä kankaalla. Se ei muuta piirtoaluetta eikä sen vientiä.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Näyttää kohteen {name} laitteessa. Muuta suunnittelua, niin näyttö seuraa."
 }

@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: آفلاین، فایل وقتی دستگاه برگردد همگام می‌شود",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} پیکسل، همان‌طور که این Mac اکنون آن را رندر می‌کند (پیکسل‌های واقعی؛ وضوح مقیاس‌شده آن را تغییر می‌دهد)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} پیکسل، وضوح بومی",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} پیکسل، اندازه همان‌گونه که داده شده"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} پیکسل، اندازه همان‌گونه که داده شده",
+ "Finish": "رنگ بدنه",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "قرار دادن در دستگاه: آرت‌بورد انتخاب‌شده به‌صورت زنده در گوشی، تبلت یا پنجرهٔ مرورگر",
+ "Show or hide the device frame around the selected artboard": "نمایش یا پنهان کردن قاب دستگاه دور آرت‌بورد انتخاب‌شده",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "روی بوم دور آرت‌بورد نمایش داده می‌شود. آرت‌بورد یا خروجی آن را تغییر نمی‌دهد.",
+ "Shows {name} in a device. Change the design and the screen follows.": "{name} را در یک دستگاه نشان می‌دهد. طراحی را تغییر دهید و صفحه از آن پیروی می‌کند."
 }

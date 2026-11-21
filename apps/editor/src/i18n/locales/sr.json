@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: ван мреже, датотека ће се синхронизовати када се врати",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} пиксела, како га овај Mac сада приказује (стварни пиксели; скалирана резолуција то мења)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} пиксела, изворна резолуција",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пиксела, величина како је задата"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пиксела, величина како је задата",
+ "Finish": "Завршна обрада",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Стави у уређај: изабрана радна табла уживо у телефону, таблету или прозору прегледача",
+ "Show or hide the device frame around the selected artboard": "Прикажи или сакриј оквир уређаја око изабране радне табле",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Приказује се око радне табле на платну. Не мења радну таблу нити њен извоз.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Приказује {name} у уређају. Промените дизајн и екран га прати."
 }

@@ -4904,5 +4904,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: bez połączenia, plik zsynchronizuje się, gdy urządzenie wróci",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} pikseli, tak jak ten Mac renderuje go teraz (piksele bufora; rozdzielczość skalowana to zmienia)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} pikseli, rozdzielczość natywna",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikseli, rozmiar podany"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} pikseli, rozmiar podany",
+ "Finish": "Wykończenie",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Umieść w urządzeniu: wybrany obszar roboczy na żywo w telefonie, tablecie lub oknie przeglądarki",
+ "Show or hide the device frame around the selected artboard": "Pokaż lub ukryj ramkę urządzenia wokół wybranego obszaru roboczego",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Wyświetlana wokół obszaru roboczego na płótnie. Nie zmienia obszaru roboczego ani jego eksportu.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Pokazuje {name} w urządzeniu. Zmień projekt, a ekran podąży za nim."
 }

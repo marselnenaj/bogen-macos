@@ -5588,5 +5588,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: غير متصل، ستتم مزامنة الملف عند عودته",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} بكسل، كما يعرضها جهاز Mac هذا الآن (البكسلات الفعلية؛ الدقة المُعدَّلة تغيّرها)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} بكسل، الدقة الأصلية",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} بكسل، الحجم كما هو محدد"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} بكسل، الحجم كما هو محدد",
+ "Finish": "التشطيب",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "ضع في جهاز: لوحة الرسم المحددة حيّة في هاتف أو جهاز لوحي أو نافذة متصفح",
+ "Show or hide the device frame around the selected artboard": "إظهار إطار الجهاز حول لوحة الرسم المحددة أو إخفاؤه",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "يظهر حول لوحة الرسم على اللوحة. لا يغيّر لوحة الرسم ولا تصديرها.",
+ "Shows {name} in a device. Change the design and the screen follows.": "يعرض {name} في جهاز. غيّر التصميم وستتبعه الشاشة."
 }

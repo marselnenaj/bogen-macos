@@ -4676,5 +4676,10 @@
  "{device}: offline, the file syncs when it is back": "{device}: офлайн, файлът ще се синхронизира, когато устройството се върне",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}: {width} × {height} пиксела, както този Mac го изобразява сега (реални пиксели; мащабирана резолюция ги променя)",
  "{display}: {width} × {height} pixels, native resolution": "{display}: {width} × {height} пиксела, собствена резолюция",
- "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пиксела, зададен размер"
+ "{display}: {width} × {height} pixels, size as given": "{display}: {width} × {height} пиксела, зададен размер",
+ "Finish": "Покритие",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "Постави в устройство: избраната работна площ на живо в телефон, таблет или прозорец на браузър",
+ "Show or hide the device frame around the selected artboard": "Покажи или скрий рамката на устройство около избраната работна площ",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "Показва се около работната площ в платното. Не променя работната площ, нито нейния експорт.",
+ "Shows {name} in a device. Change the design and the screen follows.": "Показва {name} в устройство. Промени дизайна и екранът го следва."
 }

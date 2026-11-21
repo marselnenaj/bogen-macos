@@ -4448,5 +4448,10 @@
  "{device}: offline, the file syncs when it is back": "{device}：離線，恢復連線後會同步檔案",
  "{display}: {width} × {height} pixels, as this Mac renders it now (backing pixels; a scaled resolution changes it)": "{display}：{width} × {height} 像素，依這台 Mac 目前的算繪尺寸（後備像素；縮放解析度會改變它）",
  "{display}: {width} × {height} pixels, native resolution": "{display}：{width} × {height} 像素，原生解析度",
- "{display}: {width} × {height} pixels, size as given": "{display}：{width} × {height} 像素，依指定尺寸"
+ "{display}: {width} × {height} pixels, size as given": "{display}：{width} × {height} 像素，依指定尺寸",
+ "Finish": "外觀",
+ "Put in a device: the selected artboard live in a phone, tablet or browser window": "放入裝置：所選畫板即時顯示在手機、平板或瀏覽器視窗中",
+ "Show or hide the device frame around the selected artboard": "顯示或隱藏所選畫板周圍的裝置外框",
+ "Shown around the artboard on the canvas. It does not change the artboard or its export.": "在畫布上顯示於畫板周圍。不會變更畫板或其匯出。",
+ "Shows {name} in a device. Change the design and the screen follows.": "在裝置中顯示 {name}。變更設計後，螢幕會隨之更新。"
 }
